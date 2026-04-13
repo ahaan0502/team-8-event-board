@@ -1,5 +1,5 @@
 import type { Response } from "express";
-import type { IEventService, CreateEventInput } from "./eventservice";
+import type { IEventService, CreateEventInput } from "./eventService";
 import {
   touchAppSession,
   getAuthenticatedUser,
