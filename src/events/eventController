@@ -16,4 +16,12 @@ class EventController implements IEventController {
     private readonly service: IEventService,
     private readonly logger: ILoggingService
   ) {}
+
+  async showCreateEvent(
+  res: Response,
+  session: IAppBrowserSession,
+  pageError: string | null = null
+): Promise<void> {
+  res.render("events/create", { pageError, session });
+}
 }
