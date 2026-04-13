@@ -16,6 +16,17 @@ export class EventService {
     capacity: number;
     organizerId: string;
   }): Promise<Result<Event, Error>> {
-    // validation + creation goes here
+    
+    if (!input.title || !input.description) {
+  return { ok: false, error: new InvalidEventInputError("Missing required fields") };
+}
+
+if (input.endTime <= input.startTime) {
+  return { ok: false, error: new InvalidEventInputError("End time must be after start time") };
+}
+
+if (input.capacity <= 0) {
+  return { ok: false, error: new InvalidEventInputError("Capacity must be greater than 0") };
+}
   }
 }
