@@ -1,0 +1,19 @@
+import type { Response } from "express";
+import type { IEventService, CreateEventInput } from "./eventService";
+import {
+  touchAppSession,
+  getAuthenticatedUser,
+  type AppSessionStore,
+  type IAppBrowserSession,
+} from "../session/AppSession";
+import type { ILoggingService } from "../service/LoggingService";
+import type { EventError } from "./errors";
+
+export interface IEventController {}
+
+class EventController implements IEventController {
+  constructor(
+    private readonly service: IEventService,
+    private readonly logger: ILoggingService
+  ) {}
+}
