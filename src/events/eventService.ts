@@ -25,6 +25,10 @@ export interface IEventService {
 class EventService implements IEventService {
   constructor(private readonly repo: EventRepository) {}
 
+  private canModify(event: Event, userId: string, userRole: UserRole): boolean {
+    return userRole === "admin" || event.organizerId === userId;
+  }
+
   async createEvent(
     input: CreateEventInput
   ): Promise<Result<Event, EventError>> {
@@ -85,7 +89,7 @@ class EventService implements IEventService {
       return Err(NotFoundError("Event not found."));
     }
 
-    if (userRole !== "admin" && event.organizerId !== userId) {
+    if (!this.canModify(event, userId, userRole)) {
       return Err(NotAuthorizedError("Only the organizer or an admin can publish this event."));
     }
 
@@ -107,7 +111,7 @@ class EventService implements IEventService {
       return Err(NotFoundError("Event not found."));
     }
 
-    if (userRole !== "admin" && event.organizerId !== userId) {
+    if (!this.canModify(event, userId, userRole)) {
       return Err(NotAuthorizedError("Only the organizer or an admin can cancel this event."));
     }
 
