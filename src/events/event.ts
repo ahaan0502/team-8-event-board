@@ -1,4 +1,4 @@
-export type EventStatus = "draft" | "published";
+export type EventStatus = "draft" | "published" | "cancelled" | "past";
 
 export interface Event {
   id: string;
@@ -11,4 +11,6 @@ export interface Event {
   capacity: number;
   organizerId: string;
   status: EventStatus;
+  createdAt: Date;
+  updatedAt: Date;
 }
