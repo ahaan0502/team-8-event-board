@@ -7,3 +7,7 @@ export function ValidationError(message: string) {
     message,
   };
 }
+
+export function NotFoundError(message: string): EventError {
+  return { type: "NotFoundError", message };
+}
