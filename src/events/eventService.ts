@@ -1,5 +1,5 @@
 import { Ok, Err, type Result } from "../lib/result";
-import { ValidationError, type EventError } from "./errors";
+import { ValidationError, NotFoundError, type EventError } from "./errors";
 import { Event } from "./event";
 import type { EventRepository } from "./eventRepository";
 
@@ -77,7 +77,7 @@ class EventService implements IEventService {
   actingUserId?: string
 ): Promise<Result<Event, EventError>> {
 
-  const event = await this.events.getEventById(eventId);
+  const event = await this.repo.getEventById(eventId);
 
   if (!event) {
     return Err(NotFoundError("Event not found."));
