@@ -17,6 +17,7 @@ export interface CreateEventInput {
 
 export interface IEventService {
   createEvent(input: CreateEventInput): Promise<Result<Event, EventError>>;
+  getEventById(eventId: string): Promise<Result<Event, EventError>>;
   publishEvent(eventId: string, userId: string, userRole: UserRole): Promise<Result<Event, EventError>>;
   cancelEvent(eventId: string, userId: string, userRole: UserRole): Promise<Result<Event, EventError>>;
 }
@@ -64,6 +65,14 @@ class EventService implements IEventService {
 
     const created = await this.repo.create(event);
     return Ok(created);
+  }
+
+  async getEventById(eventId: string): Promise<Result<Event, EventError>> {
+    const event = await this.repo.findById(eventId);
+    if (!event) {
+      return Err(NotFoundError("Event not found."));
+    }
+    return Ok(event);
   }
 
   async publishEvent(
