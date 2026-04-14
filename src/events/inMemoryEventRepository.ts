@@ -9,7 +9,7 @@ export class InMemoryEventRepository implements EventRepository {
     return event;
   }
 
-  async findById(id: string): Promise<Event | null> {
-    return this.events.get(id) || null;
+  async getEventById(eventId: string): Promise<Event | null> {
+    return this.events.get(eventId) ?? null;
   }
 }
