@@ -10,6 +10,18 @@ export class InMemoryEventRepository implements EventRepository {
   }
 
   async findById(id: string): Promise<Event | null> {
-    return this.events.get(id) || null;
+    return this.events.get(id) ?? null;
   }
+
+  async update(event: Event): Promise<Event> {
+    if (!this.events.has(event.id)) {
+      throw new Error(`Event ${event.id} not found`);
+    }
+    this.events.set(event.id, event);
+    return event;
+  }
+}
+
+export function CreateInMemoryEventRepository(): EventRepository {
+  return new InMemoryEventRepository();
 }
