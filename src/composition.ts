@@ -10,6 +10,8 @@ import type { ILoggingService } from "./service/LoggingService";
 import { CreateInMemoryEventRepository } from "./events/inMemoryEventRepository";
 import { CreateEventService } from "./events/eventService";
 import { CreateEventController } from "./events/eventController";
+import { CreateInMemoryRsvpRepository, CreateAttendeeService } from "./rsvp/index";
+import { CreateAttendeeController } from "./rsvp/attendeeController";
 
 export function createComposedApp(logger?: ILoggingService): IApp {
   const resolvedLogger = logger ?? CreateLoggingService();
@@ -26,5 +28,10 @@ export function createComposedApp(logger?: ILoggingService): IApp {
   const eventService = CreateEventService(eventRepo);
   const eventController = CreateEventController(eventService, resolvedLogger);
 
-  return CreateApp(authController, eventController, resolvedLogger);
+  // Attendee list wiring
+  const rsvpRepo = CreateInMemoryRsvpRepository();
+  const attendeeService = CreateAttendeeService(rsvpRepo, authUsers, eventService);
+  const attendeeController = CreateAttendeeController(attendeeService, resolvedLogger);
+
+  return CreateApp(authController, eventController, attendeeController, resolvedLogger);
 }

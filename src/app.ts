@@ -11,6 +11,8 @@ import type { UserRole } from "./auth/User";
 import { IApp } from "./contracts";
 import type { IEventController } from "./events/eventController";
 import { eventRoutes } from "./events/eventRoutes";
+import type { IAttendeeController } from "./rsvp/attendeeController";
+import { attendeeRoutes } from "./rsvp/attendeeRoutes";
 import {
   getAuthenticatedUser,
   isAuthenticatedSession,
@@ -38,6 +40,7 @@ class ExpressApp implements IApp {
   constructor(
     private readonly authController: IAuthController,
     private readonly eventController: IEventController,
+    private readonly attendeeController: IAttendeeController,
     private readonly logger: ILoggingService,
   ) {
     this.app = express();
@@ -243,6 +246,7 @@ class ExpressApp implements IApp {
     // ── Event routes ─────────────────────────────────────────────────
 
     this.app.use(eventRoutes(this.eventController));
+    this.app.use(attendeeRoutes(this.attendeeController));
 
     // ── Authenticated home page ──────────────────────────────────────
     // TODO: Replace this placeholder with your project's main page.
@@ -280,7 +284,8 @@ class ExpressApp implements IApp {
 export function CreateApp(
   authController: IAuthController,
   eventController: IEventController,
+  attendeeController: IAttendeeController,
   logger: ILoggingService,
 ): IApp {
-  return new ExpressApp(authController, eventController, logger);
+  return new ExpressApp(authController, eventController, attendeeController, logger);
 }
