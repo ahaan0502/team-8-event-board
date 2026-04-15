@@ -133,6 +133,14 @@ class EventController implements IEventController {
     pageError: null,
   });
 }
+  async showEditEvent(
+  res: Response,
+  eventId: string,
+  session: IAppBrowserSession,
+  pageError: string | null = null
+  ): Promise<void> {
+    res.render("events/edit", { eventId, pageError, session });
+  }
 }
 
 export function CreateEventController(
