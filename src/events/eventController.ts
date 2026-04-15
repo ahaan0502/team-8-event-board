@@ -141,6 +141,44 @@ class EventController implements IEventController {
   ): Promise<void> {
     res.render("events/edit", { eventId, pageError, session });
   }
+
+  async updateEventFromForm(
+  res: Response,
+  eventId: string,
+  input: Omit<CreateEventInput, "organizerId">,
+  store: AppSessionStore
+  ): Promise<void> {
+    const session = touchAppSession(store);
+    const user = getAuthenticatedUser(store);
+
+    if (!user) {
+      this.logger.warn("Unauthorized event update attempt");
+      res.status(403);
+      await this.showEditEvent(res, eventId, session, "You must be logged in.");
+      return;
+    }
+
+    const result = await this.service.updateEvent(
+      eventId,
+      input,
+      user.userId
+    );
+
+    if (!result.ok) {
+      const error = result.value;
+      const status = this.mapErrorStatus(error);
+
+      const log = status >= 500 ? this.logger.error : this.logger.warn;
+      log.call(this.logger, `Event update failed: ${error.message}`);
+
+      res.status(status);
+      await this.showEditEvent(res, eventId, session, error.message);
+      return;
+    }
+
+    this.logger.info(`Updated event ${eventId}`);
+    res.redirect(`/events/${eventId}`);
+  }
 }
 
 export function CreateEventController(
