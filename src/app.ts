@@ -9,6 +9,8 @@ import {
 } from "./auth/errors";
 import type { UserRole } from "./auth/User";
 import { IApp } from "./contracts";
+import type { IEventController } from "./events/eventController";
+import { eventRoutes } from "./events/eventRoutes";
 import {
   getAuthenticatedUser,
   isAuthenticatedSession,
@@ -35,6 +37,7 @@ class ExpressApp implements IApp {
 
   constructor(
     private readonly authController: IAuthController,
+    private readonly eventController: IEventController,
     private readonly logger: ILoggingService,
   ) {
     this.app = express();
@@ -237,6 +240,10 @@ class ExpressApp implements IApp {
       }),
     );
 
+    // ── Event routes ─────────────────────────────────────────────────
+
+    this.app.use(eventRoutes(this.eventController));
+
     // ── Authenticated home page ──────────────────────────────────────
     // TODO: Replace this placeholder with your project's main page.
 
@@ -272,7 +279,8 @@ class ExpressApp implements IApp {
 
 export function CreateApp(
   authController: IAuthController,
+  eventController: IEventController,
   logger: ILoggingService,
 ): IApp {
-  return new ExpressApp(authController, logger);
+  return new ExpressApp(authController, eventController, logger);
 }
