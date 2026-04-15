@@ -1,0 +1,49 @@
+<div class="max-w-3xl">
+  <div class="mb-4">
+    <a href="/events/<%= eventId %>" class="text-blue-600 text-sm hover:underline">&larr; Back to Event</a>
+  </div>
+
+  <section class="p-6 border border-slate-200 rounded-2xl bg-white shadow-lg mb-4">
+    <h1 class="text-2xl font-bold text-slate-900 mb-1">Attendee List</h1>
+    <p class="text-slate-400 text-sm">Grouped by RSVP status, sorted by sign-up time.</p>
+  </section>
+
+  <%
+    const groups = [
+      { key: "going",      label: "Going",      color: "bg-green-100 text-green-800 border-green-200" },
+      { key: "waitlisted", label: "Waitlisted",  color: "bg-yellow-100 text-yellow-800 border-yellow-200" },
+      { key: "cancelled",  label: "Cancelled",   color: "bg-red-100 text-red-800 border-red-200" },
+    ];
+  %>
+
+  <% for (const group of groups) { %>
+    <% if (attendees[group.key].length > 0) { %>
+      <section class="mb-4 p-5 border border-slate-200 rounded-2xl bg-white shadow-lg">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="px-2.5 py-0.5 rounded-full border text-xs font-medium <%= group.color %>">
+            <%= group.label %>
+          </span>
+          <span class="text-slate-400 text-sm"><%= attendees[group.key].length %> people</span>
+        </div>
+
+        <ul class="divide-y divide-slate-100">
+          <% for (const entry of attendees[group.key]) { %>
+            <li class="flex items-center justify-between py-2.5 text-sm">
+              <span class="font-medium text-slate-800"><%= entry.displayName %></span>
+              <span class="text-slate-400"><%= new Date(entry.createdAt).toLocaleDateString() %></span>
+            </li>
+          <% } %>
+        </ul>
+      </section>
+    <% } %>
+  <% } %>
+
+  <%
+    const total = attendees.going.length + attendees.waitlisted.length + attendees.cancelled.length;
+  %>
+  <% if (total === 0) { %>
+    <section class="p-5 border border-slate-200 rounded-2xl bg-white shadow-lg text-center text-slate-400 text-sm">
+      No RSVPs yet for this event.
+    </section>
+  <% } %>
+</div>
