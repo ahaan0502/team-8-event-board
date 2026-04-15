@@ -21,6 +21,24 @@ export interface IEventController {
     input: Omit<CreateEventInput, "organizerId">,
     store: AppSessionStore
   ): Promise<void>;
+
+  showEventDetail(
+    res: Response,
+    eventId: string,
+    store: AppSessionStore
+  ): Promise<void>;
+
+  publishEventFromForm(
+    res: Response,
+    eventId: string,
+    store: AppSessionStore
+  ): Promise<void>;
+
+  cancelEventFromForm(
+    res: Response,
+    eventId: string,
+    store: AppSessionStore
+  ): Promise<void>;
 }
 
 class EventController implements IEventController {
@@ -76,6 +94,91 @@ class EventController implements IEventController {
 
     this.logger.info(`Created event ${result.value.id}`);
     res.redirect(`/events/${result.value.id}`);
+  }
+
+  async showEventDetail(
+    res: Response,
+    eventId: string,
+    store: AppSessionStore
+  ): Promise<void> {
+    const session = touchAppSession(store);
+    const result = await this.service.getEventById(eventId);
+
+    if (result.ok === false) {
+      res.status(404).render("partials/error", {
+        message: result.value.message,
+        layout: false,
+      });
+      return;
+    }
+
+    res.render("events/detail", { event: result.value, session });
+  }
+
+  async publishEventFromForm(
+    res: Response,
+    eventId: string,
+    store: AppSessionStore
+  ): Promise<void> {
+    const user = getAuthenticatedUser(store);
+
+    if (!user) {
+      res.status(403).render("partials/error", {
+        message: "You must be logged in.",
+        layout: false,
+      });
+      return;
+    }
+
+    const result = await this.service.publishEvent(eventId, user.userId, user.role);
+
+    if (result.ok === false) {
+      const status = result.value.type === "NotFoundError" ? 404
+        : result.value.type === "NotAuthorizedError" ? 403
+        : 400;
+      this.logger.warn(`Publish failed for event ${eventId}: ${result.value.message}`);
+      res.status(status).render("partials/error", {
+        message: result.value.message,
+        layout: false,
+      });
+      return;
+    }
+
+    this.logger.info(`Published event ${eventId}`);
+    res.redirect(`/events/${eventId}`);
+  }
+
+  async cancelEventFromForm(
+    res: Response,
+    eventId: string,
+    store: AppSessionStore
+  ): Promise<void> {
+    const user = getAuthenticatedUser(store);
+
+    if (!user) {
+      res.status(403).render("partials/error", {
+        message: "You must be logged in.",
+        layout: false,
+      });
+      return;
+    }
+
+    const result = await this.service.cancelEvent(eventId, user.userId, user.role);
+
+    if (result.ok === false) {
+      const status = result.value.type === "NotFoundError" ? 404
+        : result.value.type === "NotAuthorizedError" ? 403
+        : 400;
+      this.logger.warn(`Cancel failed for event ${eventId}: ${result.value.message}`);
+      res.status(status).render("partials/error", {
+        message: result.value.message,
+        layout: false,
+      });
+      return;
+    }
+
+    this.logger.info(`Cancelled event ${eventId}`);
+    res.redirect(`/events/${eventId}`);
   }
 }
 
