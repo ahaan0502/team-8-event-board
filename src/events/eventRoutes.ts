@@ -30,5 +30,17 @@ export function eventRoutes(
     );
   });
 
+  router.get("/events/:id", async (req, res) => {
+    await controller.showEventDetail(res, req.params.id, req.session as AppSessionStore);
+  });
+
+  router.post("/events/:id/publish", async (req, res) => {
+    await controller.publishEventFromForm(res, req.params.id, req.session as AppSessionStore);
+  });
+
+  router.post("/events/:id/cancel", async (req, res) => {
+    await controller.cancelEventFromForm(res, req.params.id, req.session as AppSessionStore);
+  });
+
   return router;
 }
