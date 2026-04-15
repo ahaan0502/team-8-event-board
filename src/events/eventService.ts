@@ -77,7 +77,9 @@ class EventService implements IEventService {
       if (!event) {
         return Err(ValidationError("Event not found"));
       }
-
+      if (event.organizerId !== actingUserId) {
+        return Err(ValidationError("Not authorized to edit this event"));
+      }
       return Ok(event);
     } 
 }
