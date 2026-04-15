@@ -21,6 +21,12 @@ export interface IEventController {
     input: Omit<CreateEventInput, "organizerId">,
     store: AppSessionStore
   ): Promise<void>;
+
+    getEventDetail(
+    res: Response,
+    eventId: string,
+    store: AppSessionStore
+  ): Promise<void>;
 }
 
 class EventController implements IEventController {
@@ -77,6 +83,42 @@ class EventController implements IEventController {
     this.logger.info(`Created event ${result.value.id}`);
     res.redirect(`/events/${result.value.id}`);
   }
+
+  async getEventDetail(
+  res: Response,
+  eventId: string,
+  store: AppSessionStore
+): Promise<void> {
+  const session = touchAppSession(store);
+  const user = getAuthenticatedUser(store);
+
+  const result = await this.service.getEventById(
+    eventId,
+    user?.userId
+  );
+
+  if (result.ok === false) {
+    const error = result.value;
+
+    const status =
+      error.type === "NotFoundError" ? 404 : 500;
+
+    const log = status >= 500 ? this.logger.error : this.logger.warn;
+    log.call(this.logger, `Event detail failed: ${error.message}`);
+
+    res.status(status).render("partials/error", {
+      message: error.message,
+      layout: false,
+    });
+    return;
+  }
+
+  res.render("events/detail", {
+    event: result.value,
+    session,
+    pageError: null,
+  });
+}
 }
 
 export function CreateEventController(
