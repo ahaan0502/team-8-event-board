@@ -27,6 +27,20 @@ export interface IEventController {
     eventId: string,
     store: AppSessionStore
   ): Promise<void>;
+
+    showEditEvent(
+    res: Response,
+    eventId: string,
+    session: IAppBrowserSession,
+    pageError?: string | null
+  ): Promise<void>;
+
+    updateEventFromForm(
+    res: Response,
+    eventId: string,
+    input: Omit<CreateEventInput, "organizerId">,
+    store: AppSessionStore
+  ): Promise<void>;
 }
 
 class EventController implements IEventController {
