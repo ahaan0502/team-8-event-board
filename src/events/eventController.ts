@@ -22,11 +22,11 @@ export interface IEventController {
     store: AppSessionStore
   ): Promise<void>;
 
-    getEventDetail(
+    /*getEventDetail(
     res: Response,
     eventId: string,
     store: AppSessionStore
-  ): Promise<void>;
+  ): Promise<void>;*/
 
     showEditEvent(
     res: Response,
@@ -164,7 +164,7 @@ class EventController implements IEventController {
       user.userId
     );
 
-    if (!result.ok) {
+    if (result.ok === false) {
       const error = result.value;
       const status = this.mapErrorStatus(error);
 
