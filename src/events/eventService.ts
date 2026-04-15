@@ -80,6 +80,9 @@ class EventService implements IEventService {
       if (event.organizerId !== actingUserId) {
         return Err(ValidationError("Not authorized to edit this event"));
       }
+      if (event.status === "cancelled" || event.status === "past") {
+        return Err(ValidationError("Cannot edit this event"));
+      }
       return Ok(event);
     } 
 }
