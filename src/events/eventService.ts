@@ -67,7 +67,19 @@ class EventService implements IEventService {
 
     return Ok(created);
   }
-  
+
+  async updateEvent(
+    eventId: string,
+    input: Omit<CreateEventInput, "organizerId">,
+    actingUserId: string): Promise<Result<Event, EventError>> {
+      const event = await this.repo.getEventById(eventId);
+
+      if (!event) {
+        return Err(ValidationError("Event not found"));
+      }
+
+      return Ok(event);
+    } 
 }
 
 export function CreateEventService(
