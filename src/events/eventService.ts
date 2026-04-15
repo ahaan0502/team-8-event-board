@@ -83,7 +83,23 @@ class EventService implements IEventService {
       if (event.status === "cancelled" || event.status === "past") {
         return Err(ValidationError("Cannot edit this event"));
       }
-      return Ok(event);
+      const validation = await this.createEvent({
+        ...input,
+        organizerId: event.organizerId,
+      });
+
+      if (!validation.ok) {
+        return validation;
+      }
+
+      const updated: Event = {
+        ...event,
+        ...input,
+      };
+
+      const saved = await this.repo.update(updated);
+
+      return Ok(saved);
     } 
 }
 
