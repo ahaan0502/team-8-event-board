@@ -1,190 +1,200 @@
+This document defines the shared service-layer contracts for the Local Event Board application.
+All service methods follow the Result<T, E> pattern and do not access HTTP or session state directly.
+
+Shared Types
+    Result Type
+        type Result<T, E> =
+            | { ok: true; value: T }
+            | { ok: false; error: E }
+
+    EventInput
+        type EventInput = {
+            title: string
+            description: string
+            location: string
+            category: string
+            startTime: Date
+            endTime: Date
+            capacity: number
+        }
+
+    CreateEventInput
+        type CreateEventInput = EventInput & {
+            organizerId: string
+        }
+
+    EventFilters
+        type EventFilters = {
+            category?: string
+            timeframe?: "all" | "week" | "weekend"
+        }
+
+    EventStatus
+        type EventStatus =
+            | "draft"
+            | "published"
+            | "cancelled"
+            | "past"
+
+    Event
+        type Event = {
+            id: string
+            title: string
+            description: string
+            location: string
+            category: string
+            startTime: Date
+            endTime: Date
+            capacity: number
+            organizerId: string
+            status: EventStatus
+        }        
 
-### Method: getEventById
+    RSVP
+        type RSVP = {
+            id: string
+            eventId: string
+            userId: string
+            status: "going" | "waitlisted" | "cancelled"
+            createdAt: Date
+        }    
 
-**Signature**
-getEventById(eventId: string): Event
+    Error Types
+        type ValidationError = {
+            type: "ValidationError"
+            message: string
+        }
 
-**Description**
-Takes the event id and optionally the viewer id and returns the corresponding event.
+        type NotFoundError = {
+            type: "NotFoundError"
+            message: string
+        }
 
-**Parameters**
-eventId: string
+        type NotAuthorizedError = {
+            type: "NotAuthorizedError"
+            message: string
+        }
 
-**Returns**
-Event
+        type InvalidStateError = {
+            type: "InvalidStateError"
+            message: string
+        }
+    
+    Event Errors
+        type EventError =
+            | ValidationError
+            | NotFoundError
+            | NotAuthorizedError
+            | InvalidStateError
 
-**Success Criteria**
-Returns the correct event corresponding to the id
+    RSVP Errors
+        type RSVPError =
+            | ValidationError
+            | NotFoundError
+            | NotAuthorizedError
+            | InvalidStateError
 
-**Errors**
-failedToFetch: Fails to fetch the event
 
+Event Contracts
+    Method: createEvent
 
-### Method: validateEventInput
+        Signature: createEvent(input: CreateEventInput): Promise<Result<Event, EventError>>
 
-**Signature**
-validateEventInput(input: eventInput): void
+        Description: Creates a new event in draft status after validating input.
 
-**Description**
-Validates the given eventInput 
+        Errors: ValidationError: invalid or missing fields
 
-**Parameters**
-input: eventInput
+    Method: getEventById
 
-**Returns**
-void
+        Signature: getEventById(eventId: string): Promise<Result<Event, EventError>>
 
-**Success Criteria**
-Returns true to confirm the eventInput is valid
+        Description: Retrieves a single event by its ID.
 
-**Errors**
-invalidInput: input is not of valid type
+        Parameters: eventId: string
 
+        Returns: Result containing the Event if found
 
-### Method: toggleRSVP
+        Errors: NotFoundError
 
-**Signature**
-toggleRSVP(eventId: string, userId: string): RSVPResult
+    Method: validateEventInput
 
-**Description**
-Toggles status of RSVP for given user and event
+        Signature: validateEventInput(input: EventInput): Result<void, ValidationError>
 
-**Parameters**
-eventId: string, userId: string
+        Description: Validates event input fields
 
-**Returns**
-RSVPResult
+        Parameters: input: EventInput
 
-**Success Criteria**
-Appropriately toggles the RSVP status for a given user for a given event
+        Returns: Success if input is valid
 
-**Errors**
-RSVPToggleFail: fails to update the RSVP status of a user for an event
+        Errors: ValidationError: invalid or missing fields
 
+    Method: updateEvent
 
-### Method: archiveExpiredEvents
+        Signature: updateEvent(eventId: string, input: EventInput,
+            actingUserId: string): Promise<Result<Event, EventError>>
 
-**Signature**
-archiveExpiredEvents(now: Date): Event[]
+        Description: Updates an existing event if the acting user is authorized and the event is in a valid state.
 
-**Description**
-Archives events that have expired
+        Parameters: eventId: string, input: EventInput, actingUserId: string
 
-**Parameters**
-now: Date
+        Returns: Updated Event
 
-**Returns**
-Event[]
+        Errors: ValidationError, NotFoundError, NotAuthorizedError, InvalidStateError
 
-**Success Criteria**
-Expired events are archived from the published events
+    Method: listPublishedEvents
 
-**Errors**
-//Will be added upon implementation
+        Signature: listPublishedEvents(filters: EventFilters): Promise<Result<Event[], EventError>>
 
+        Description: Returns all published events matching the given filters.
 
-### Method: listPublishedEvents
+        Parameters: filters: EventFilters
 
-**Signature**
-listPublishedEvents(filters: EventFilters): Event[]
+        Returns: List of published events
 
-**Description**
-Returns all currently published events
+        Errors: ValidationError: invalid filter values
 
-**Parameters**
-filters: EventFilters
+    Method: archiveExpiredEvents
 
-**Returns**
-Event[]
+        Signature: archiveExpiredEvents(now: Date): Promise<Result<Event[], never>>
 
-**Success Criteria**
-Returns list of all currently published events
+        Description: Transitions expired events into "past" status and returns them.
 
-**Errors**
-//Will be added upon implementation
+        Parameters: now: Date
 
+        Returns: List of archived events
 
-### Method: assertEventOwner
+        Errors: None
 
-**Signature**
-assertEventOwner(event: Event, userId: string): void
+    Method: assertEventOwner
 
-**Description**
-Verifies if a given user is the owner of a given event
+        Signature: assertEventOwner(event: Event, userId: string): Promise<void, EventError>
 
-**Parameters**
-event: Event, userId: string
+        Description: Checks whether a user is the owner of an event.
 
-**Returns**
-void
+        Parameters: event: Event, userId: string
 
-**Success Criteria**
-Correctly verifies if a given user is the owner of a given event
+        Returns: Success if user is the owner
 
-**Errors**
-failedToAssertOwner: Fails to retrieve relationship between a user and an event
+        Errors: NotAuthorizedError: user is not the event owner
 
+RSVP Contracts
+    
+    Method: toggleRSVP
 
-### Method: getCurrentTime
+        Signature: toggleRSVP(eventId: string, userId: string): Promise<Result<RSVP, RSVPError>>
 
-**Signature**
-getCurrentTime(): Date
+    Description: Toggles RSVP status for a user on an event.
 
-**Description**
-Returns the current date
+    Behavior: If no RSVP exists:
+        Create RSVP as "going" if capacity allows
+        Otherwise create as "waitlisted"
+        If RSVP exists and is active:
+        Change status to "cancelled"
+        If RSVP exists and is cancelled:
+        Reactivate as "going" or "waitlisted"
 
-**Parameters**
-n/a
+    Parameters: eventId: string, userId: string
 
-**Returns**
-Date
+    Returns: Updated RSVP object
 
-**Success Criteria**
-Returns the date at a current timestamp
-
-**Errors**
-failedToGetDate: Fails to return the correct date
-
-
-### Method: getCurrentUserId
-
-**Signature**
-getCurrentUserId(): string
-
-**Description**
-Returns the current user's id
-
-**Parameters**
-n/a
-
-**Returns**
-string
-
-**Success Criteria**
-Returns the id of the current user
-
-**Errors**
-failedToRetrieveId: Fails to return the correct user id
-
-
-### Method: <method_name>
-
-**Signature**
-<function signature>
-
-**Description**
-What the method does (1–2 sentences)
-
-**Parameters**
-<param_name> (<type>): Description
-
-**Returns**
-<type>: Description of successful result
-
-**Success Criteria**
-What defines a valid successful response
-Any guarantees (e.g., non-null fields, ordering, constraints)
-
-**Errors**
-<ERROR_NAME>: Description of when this occurs
-<ERROR_NAME>: Description
+    Errors: ValidationError, NotFoundError, NotAuthorizedError, InvalidStateError
