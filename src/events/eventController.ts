@@ -8,6 +8,7 @@ import {
 } from "../session/AppSession";
 import type { ILoggingService } from "../service/LoggingService";
 import type { EventError } from "./errors";
+import { IRSVPService } from "./rsvpService";
 
 export interface IEventController {
   showCreateEvent(
@@ -22,7 +23,7 @@ export interface IEventController {
     store: AppSessionStore
   ): Promise<void>;
 
-  showEventDetail(
+    getEventDetail(
     res: Response,
     eventId: string,
     store: AppSessionStore
@@ -35,6 +36,21 @@ export interface IEventController {
   ): Promise<void>;
 
   cancelEventFromForm(
+    showEditEvent(
+    res: Response,
+    eventId: string,
+    session: AppSessionStore,
+    pageError?: string | null
+  ): Promise<void>;
+
+    updateEventFromForm(
+    res: Response,
+    eventId: string,
+    input: Omit<CreateEventInput, "organizerId">,
+    store: AppSessionStore
+  ): Promise<void>;
+
+    toggleRSVP(
     res: Response,
     eventId: string,
     store: AppSessionStore
@@ -44,6 +60,7 @@ export interface IEventController {
 class EventController implements IEventController {
   constructor(
     private readonly service: IEventService,
+    private readonly rsvpService: IRSVPService,
     private readonly logger: ILoggingService
   ) {}
 
@@ -96,59 +113,106 @@ class EventController implements IEventController {
     res.redirect(`/events/${result.value.id}`);
   }
 
-  async showEventDetail(
-    res: Response,
-    eventId: string,
-    store: AppSessionStore
-  ): Promise<void> {
-    const session = touchAppSession(store);
-    const result = await this.service.getEventById(eventId);
+  async getEventDetail(
+  res: Response,
+  eventId: string,
+  store: AppSessionStore
+): Promise<void> {
+  const session = touchAppSession(store);
+  const user = getAuthenticatedUser(store);
 
-    if (result.ok === false) {
-      res.status(404).render("partials/error", {
-        message: result.value.message,
-        layout: false,
-      });
-      return;
-    }
+  const result = await this.service.getEventById(
+    eventId,
+    user?.userId
+  );
 
-    res.render("events/detail", { event: result.value, session });
+  if (result.ok === false) {
+    const error = result.value;
+
+    const status =
+      error.type === "NotFoundError" ? 404 : 500;
+
+    const log = status >= 500 ? this.logger.error : this.logger.warn;
+    log.call(this.logger, `Event detail failed: ${error.message}`);
+
+    res.status(status).render("partials/error", {
+      message: error.message,
+      layout: false,
+    });
+    return;
   }
 
-  async publishEventFromForm(
-    res: Response,
-    eventId: string,
-    store: AppSessionStore
+  res.render("events/detail", {
+    event: result.value,
+    session,
+    pageError: null,
+  });
+}
+  async showEditEvent(
+  res: Response,
+  eventId: string,
+  store: AppSessionStore,
+  pageError: string | null = null
+): Promise<void> {
+  const session = touchAppSession(store);
+  const user = getAuthenticatedUser(store);
+
+  const result = await this.service.getEventById(
+    eventId,
+    user?.userId
+  );
+
+  if (!result.ok) {
+    res.status(404).send("Event not found");
+    return;
+  }
+
+  res.render("events/edit", {
+    event: result.value,
+    session,
+    pageError,
+  });
+}
+
+  async updateEventFromForm(
+  res: Response,
+  eventId: string,
+  input: Omit<CreateEventInput, "organizerId">,
+  store: AppSessionStore
   ): Promise<void> {
+    const session = touchAppSession(store);
     const user = getAuthenticatedUser(store);
 
     if (!user) {
-      res.status(403).render("partials/error", {
-        message: "You must be logged in.",
-        layout: false,
-      });
+      this.logger.warn("Unauthorized event update attempt");
+      res.status(403);
+      await this.showEditEvent(res, eventId, store, "You must be logged in.");
       return;
     }
 
-    const result = await this.service.publishEvent(eventId, user.userId, user.role);
+    const result = await this.service.updateEvent(
+      eventId,
+      input,
+      user.userId
+    );
 
     if (result.ok === false) {
-      const status = result.value.type === "NotFoundError" ? 404
-        : result.value.type === "NotAuthorizedError" ? 403
-        : 400;
-      this.logger.warn(`Publish failed for event ${eventId}: ${result.value.message}`);
-      res.status(status).render("partials/error", {
-        message: result.value.message,
-        layout: false,
-      });
+      const error = result.value;
+      const status = this.mapErrorStatus(error);
+
+      const log = status >= 500 ? this.logger.error : this.logger.warn;
+      log.call(this.logger, `Event update failed: ${error.message}`);
+
+      res.status(status);
+      await this.showEditEvent(res, eventId, store, error.message);
       return;
     }
 
-    this.logger.info(`Published event ${eventId}`);
+    this.logger.info(`Updated event ${eventId}`);
     res.redirect(`/events/${eventId}`);
   }
 
-  async cancelEventFromForm(
+  async toggleRSVP(
     res: Response,
     eventId: string,
     store: AppSessionStore
@@ -184,7 +248,8 @@ class EventController implements IEventController {
 
 export function CreateEventController(
   service: IEventService,
+  rsvpService: IRSVPService,
   logger: ILoggingService
 ): IEventController {
-  return new EventController(service, logger);
+  return new EventController(service, rsvpService, logger);
 }
