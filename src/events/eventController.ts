@@ -31,7 +31,7 @@ export interface IEventController {
     showEditEvent(
     res: Response,
     eventId: string,
-    session: IAppBrowserSession,
+    session: AppSessionStore,
     pageError?: string | null
   ): Promise<void>;
 
@@ -136,22 +136,28 @@ class EventController implements IEventController {
   async showEditEvent(
   res: Response,
   eventId: string,
-  session: IAppBrowserSession,
+  store: AppSessionStore,
   pageError: string | null = null
-  ): Promise<void> {
-    const result = await this.service.getEventById(eventId);
+): Promise<void> {
+  const session = touchAppSession(store);
+  const user = getAuthenticatedUser(store);
 
-    if (result.ok === false) {
-      res.status(404).send("Event not found");
-      return;
-    }
+  const result = await this.service.getEventById(
+    eventId,
+    user?.userId
+  );
 
-    res.render("events/edit", {
-      event: result.value,
-      session,
-      pageError,
-    });
+  if (!result.ok) {
+    res.status(404).send("Event not found");
+    return;
   }
+
+  res.render("events/edit", {
+    event: result.value,
+    session,
+    pageError,
+  });
+}
 
   async updateEventFromForm(
   res: Response,
@@ -165,7 +171,7 @@ class EventController implements IEventController {
     if (!user) {
       this.logger.warn("Unauthorized event update attempt");
       res.status(403);
-      await this.showEditEvent(res, eventId, session, "You must be logged in.");
+      await this.showEditEvent(res, eventId, store, "You must be logged in.");
       return;
     }
 
@@ -183,7 +189,7 @@ class EventController implements IEventController {
       log.call(this.logger, `Event update failed: ${error.message}`);
 
       res.status(status);
-      await this.showEditEvent(res, eventId, session, error.message);
+      await this.showEditEvent(res, eventId, store, error.message);
       return;
     }
 

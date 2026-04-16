@@ -30,13 +30,21 @@ export function eventRoutes(
     );
   });
 
+  router.get("/events/:id", async (req, res) => {
+    await controller.getEventDetail(
+      res,
+      req.params.id,
+      store
+    );
+  });
+
   router.get("/events/:id/edit", async (req, res) => {
     const session = touchAppSession(store);
 
     await controller.showEditEvent(
       res,
       req.params.id,
-      session
+      store
     );
   });
 

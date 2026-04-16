@@ -328,6 +328,26 @@ this.app.get(
     );
   }),
 );
+    
+this.app.get(
+  "/events/:id/edit",
+  asyncHandler(async (req, res) => {
+    if (!this.requireAuthenticated(req, res)) {
+      return;
+    }
+
+    const eventId =
+      typeof req.params.id === "string" ? req.params.id : "";
+
+    const session = touchAppSession(sessionStore(req));
+
+    await this.eventController.showEditEvent(
+      res,
+      eventId,
+      sessionStore(req)
+    );
+  }),
+);
 
 this.app.get(
   "/events/:id",
@@ -345,6 +365,34 @@ this.app.get(
       sessionStore(req)
     );
   }),
+);
+
+this.app.post(
+  "/events/:id",
+  asyncHandler(async (req, res) => {
+    if (!this.requireAuthenticated(req, res)) {
+      return;
+    }
+
+    const eventId =
+      typeof req.params.id === "string" ? req.params.id : "";
+
+    await this.eventController.updateEventFromForm(
+      res,
+      eventId,
+      {
+        title: typeof req.body.title === "string" ? req.body.title : "",
+        description:
+          typeof req.body.description === "string" ? req.body.description : "",
+        location: typeof req.body.location === "string" ? req.body.location : "",
+        category: typeof req.body.category === "string" ? req.body.category : "",
+        startTime: new Date(req.body.startTime),
+        endTime: new Date(req.body.endTime),
+        capacity: Number(req.body.capacity),
+      },
+      sessionStore(req)
+    );
+  })
 );
 
     // ── Authenticated home page ──────────────────────────────────────
