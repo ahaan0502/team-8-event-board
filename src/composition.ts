@@ -15,6 +15,8 @@ import { RSVPDashboardController } from "./rsvps/RSVPDashboardController";
 import { CreateRSVPDashboardService } from "./rsvps/RSVPDashboardService";
 import { CreateLoggingService } from "./service/LoggingService";
 import type { ILoggingService } from "./service/LoggingService";
+import { CreateRSVPRepository } from "./events/rsvpRepository";
+import { CreateRSVPService } from "./events/rsvpService";
 
 export function createComposedApp(logger?: ILoggingService): IApp {
   const resolvedLogger = logger ?? CreateLoggingService();
@@ -33,11 +35,23 @@ export function createComposedApp(logger?: ILoggingService): IApp {
   // Event wiring
   const eventRepo = new InMemoryEventRepository();
   const eventService = CreateEventService(eventRepo);
-  const eventController = CreateEventController(eventService, resolvedLogger);
+
+  // RSVP wiring (NEW)
+  const rsvpRepo = CreateRSVPRepository();
+  const rsvpService = CreateRSVPService(rsvpRepo, eventRepo);
+
+  const eventController = CreateEventController(
+  eventService,
+  rsvpService,
+  resolvedLogger
+);
 
   // RSVP dashboard wiring
-  const rsvpRepo = new InMemoryRSVPRepository();
-  const rsvpDashboardService = CreateRSVPDashboardService(rsvpRepo, eventRepo);
+  const dashboardRsvpRepo = new InMemoryRSVPRepository();
+  const rsvpDashboardService = CreateRSVPDashboardService(
+  dashboardRsvpRepo,
+  eventRepo
+);
   const rsvpDashboardController = new RSVPDashboardController(
     rsvpDashboardService
   );
@@ -45,7 +59,7 @@ export function createComposedApp(logger?: ILoggingService): IApp {
   // Organizer dashboard wiring
   const organizerDashboardService = CreateOrganizerDashboardService(
     eventRepo,
-    rsvpRepo
+    dashboardRsvpRepo
   );
   const organizerDashboardController = new OrganizerDashboardController(
     organizerDashboardService
