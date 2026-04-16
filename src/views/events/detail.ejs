@@ -21,3 +21,13 @@
 <p><strong>Status:</strong> <%= event.status %></p>
 
 <p><strong>Organizer ID:</strong> <%= event.organizerId %></p>
+
+<form method="POST" action="/events/<%= event.id %>/rsvp">
+  <button type="submit">
+    Toggle RSVP
+  </button>
+</form>
+
+<p>
+  Your RSVP: <%= event.rsvpStatus || "none" %>
+</p>
