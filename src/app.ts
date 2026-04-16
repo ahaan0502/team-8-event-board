@@ -313,7 +313,6 @@ this.app.get(
     }
 
     const user = getAuthenticatedUser(sessionStore(req));
-    console.log("authenticated user:", user?.userId);
     if (!user) {
       res.redirect("/login");
       return;
