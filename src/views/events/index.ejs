@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Browse Events</title>
+  </head>
+  <body>
+    <h1>Browse Events</h1>
+
+    <% if (pageError) { %>
+      <p><%= pageError %></p>
+    <% } %>
+
+    <form method="GET" action="/events">
+      <div>
+        <label for="q">Search</label>
+        <input
+          type="text"
+          id="q"
+          name="q"
+          value="<%= filters?.q ?? '' %>"
+        />
+      </div>
+
+      <div>
+        <label for="category">Category</label>
+        <input
+          type="text"
+          id="category"
+          name="category"
+          value="<%= filters?.category ?? '' %>"
+        />
+      </div>
+
+      <div>
+        <label for="date">Date</label>
+        <input
+          type="date"
+          id="date"
+          name="date"
+          value="<%= filters?.date ?? '' %>"
+        />
+      </div>
+
+      <button type="submit">Apply</button>
+    </form>
+
+    <hr />
+
+    <% if (events.length === 0) { %>
+      <p>No matching events found.</p>
+    <% } else { %>
+      <ul>
+        <% events.forEach((event) => { %>
+          <li>
+            <h2><%= event.title %></h2>
+            <p><%= event.description %></p>
+            <p><strong>Location:</strong> <%= event.location %></p>
+            <p><strong>Category:</strong> <%= event.category %></p>
+            <p>
+              <strong>Starts:</strong>
+              <%= event.startDatetime.toLocaleString() %>
+            </p>
+            <p>
+              <strong>Ends:</strong>
+              <%= event.endDatetime.toLocaleString() %>
+            </p>
+          </li>
+        <% }) %>
+      </ul>
+    <% } %>
+  </body>
+</html>
