@@ -30,5 +30,40 @@ export function eventRoutes(
     );
   });
 
+  router.get("/events/:id", async (req, res) => {
+    await controller.getEventDetail(
+      res,
+      req.params.id,
+      store
+    );
+  });
+
+  router.get("/events/:id/edit", async (req, res) => {
+    const session = touchAppSession(store);
+
+    await controller.showEditEvent(
+      res,
+      req.params.id,
+      store
+    );
+  });
+
+  router.post("/events/:id", async (req, res) => {
+    await controller.updateEventFromForm(
+      res,
+      req.params.id,
+      {
+        title: req.body.title,
+        description: req.body.description,
+        location: req.body.location,
+        category: req.body.category,
+        startTime: new Date(req.body.startTime),
+        endTime: new Date(req.body.endTime),
+        capacity: Number(req.body.capacity),
+      },
+      store
+    );
+});
+
   return router;
 }
