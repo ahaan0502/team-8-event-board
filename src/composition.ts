@@ -15,6 +15,9 @@ import { RSVPDashboardController } from "./rsvps/RSVPDashboardController";
 import { CreateRSVPDashboardService } from "./rsvps/RSVPDashboardService";
 import { CreateLoggingService } from "./service/LoggingService";
 import type { ILoggingService } from "./service/LoggingService";
+import { CreateInMemoryEventRepository } from "./events/inMemoryEventRepository";
+import { CreateEventService } from "./events/eventService";
+import { CreateEventController } from "./events/eventController";
 import { CreateRSVPRepository } from "./events/rsvpRepository";
 import { CreateRSVPService } from "./events/rsvpService";
 

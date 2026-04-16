@@ -29,6 +29,13 @@ export interface IEventController {
     store: AppSessionStore
   ): Promise<void>;
 
+  publishEventFromForm(
+    res: Response,
+    eventId: string,
+    store: AppSessionStore
+  ): Promise<void>;
+
+  cancelEventFromForm(
     showEditEvent(
     res: Response,
     eventId: string,
@@ -213,17 +220,28 @@ class EventController implements IEventController {
     const user = getAuthenticatedUser(store);
 
     if (!user) {
-      res.status(403).send("Must be logged in");
+      res.status(403).render("partials/error", {
+        message: "You must be logged in.",
+        layout: false,
+      });
       return;
     }
 
-    const result = await this.rsvpService.toggleRSVP(eventId, user.userId);
+    const result = await this.service.cancelEvent(eventId, user.userId, user.role);
 
-    if (!result.ok) {
-      res.status(400).send(result.value.message);
+    if (result.ok === false) {
+      const status = result.value.type === "NotFoundError" ? 404
+        : result.value.type === "NotAuthorizedError" ? 403
+        : 400;
+      this.logger.warn(`Cancel failed for event ${eventId}: ${result.value.message}`);
+      res.status(status).render("partials/error", {
+        message: result.value.message,
+        layout: false,
+      });
       return;
     }
 
+    this.logger.info(`Cancelled event ${eventId}`);
     res.redirect(`/events/${eventId}`);
   }
 }

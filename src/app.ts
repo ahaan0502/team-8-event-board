@@ -9,6 +9,8 @@ import {
 } from "./auth/errors";
 import type { UserRole } from "./auth/User";
 import { IApp } from "./contracts";
+import type { IEventController } from "./events/eventController";
+import { eventRoutes } from "./events/eventRoutes";
 import {
   getAuthenticatedUser,
   isAuthenticatedSession,
