@@ -328,25 +328,7 @@ this.app.get(
     );
   }),
 );
-
-/*this.app.get(
-  "/events/:id",
-  asyncHandler(async (req, res) => {
-    if (!this.requireAuthenticated(req, res)) {
-      return;
-    }
-
-    const eventId =
-      typeof req.params.id === "string" ? req.params.id : "";
-
-    await this.eventController.getEventDetail(
-      res,
-      eventId,
-      sessionStore(req)
-    );
-  }),
-);
-
+    
 this.app.get(
   "/events/:id/edit",
   asyncHandler(async (req, res) => {
@@ -360,6 +342,24 @@ this.app.get(
     const session = touchAppSession(sessionStore(req));
 
     await this.eventController.showEditEvent(
+      res,
+      eventId,
+      sessionStore(req)
+    );
+  }),
+);
+
+this.app.get(
+  "/events/:id",
+  asyncHandler(async (req, res) => {
+    if (!this.requireAuthenticated(req, res)) {
+      return;
+    }
+
+    const eventId =
+      typeof req.params.id === "string" ? req.params.id : "";
+
+    await this.eventController.getEventDetail(
       res,
       eventId,
       sessionStore(req)

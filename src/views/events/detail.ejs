@@ -1,23 +1,23 @@
 <h1><%= event.title %></h1>
 
-<p> Description:  <%= event.description %></p>
+<p><strong>Description:</strong> <%= event.description %></p>
 
-<p> Location:  <%= event.location %></p>
+<p><strong>Location:</strong> <%= event.location %></p>
 
-<p> Category:  <%= event.category %></p>
+<p><strong>Category:</strong> <%= event.category %></p>
 
 <p>
-   Start: 
-  <%= event.startTime.toLocaleString() %>
+  <strong>Start:</strong>
+  <%= event.startTime ? new Date(event.startTime).toLocaleString() : "N/A" %>
 </p>
 
 <p>
-   End: 
-  <%= event.endTime.toLocaleString() %>
+  <strong>End:</strong>
+  <%= event.endTime ? new Date(event.endTime).toLocaleString() : "N/A" %>
 </p>
 
-<p> Capacity:  <%= event.capacity %></p>
+<p><strong>Capacity:</strong> <%= event.capacity %></p>
 
-<p> Status:  <%= event.status %></p>
+<p><strong>Status:</strong> <%= event.status %></p>
 
-<p> Organizer ID:  <%= event.organizerId %></p>
+<p><strong>Organizer ID:</strong> <%= event.organizerId %></p>
