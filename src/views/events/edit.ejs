@@ -5,5 +5,20 @@
   </head>
   <body>
     <h1>Edit Event</h1>
+
+    <form method="POST" action="/events/<%= event.id %>">
+      <div>
+        <label>Title</label>
+        <input type="text" name="title" required />
+      </div>
+
+      <div>
+        <label>Description</label>
+        <textarea name="description" required></textarea>
+      </div>
+
+      <button type="submit">Update Event</button>
+    </form>
+    
   </body>
 </html>
