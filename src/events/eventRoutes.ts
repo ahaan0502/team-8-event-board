@@ -28,16 +28,39 @@ export function eventRoutes(controller: IEventController) {
   });
 
   router.get("/events/:id", async (req, res) => {
-    await controller.showEventDetail(res, req.params.id, req.session as AppSessionStore);
+    await controller.getEventDetail(
+      res,
+      req.params.id,
+      store
+    );
   });
 
-  router.post("/events/:id/publish", async (req, res) => {
-    await controller.publishEventFromForm(res, req.params.id, req.session as AppSessionStore);
+  router.get("/events/:id/edit", async (req, res) => {
+    const session = touchAppSession(store);
+
+    await controller.showEditEvent(
+      res,
+      req.params.id,
+      store
+    );
   });
 
-  router.post("/events/:id/cancel", async (req, res) => {
-    await controller.cancelEventFromForm(res, req.params.id, req.session as AppSessionStore);
-  });
+  router.post("/events/:id", async (req, res) => {
+    await controller.updateEventFromForm(
+      res,
+      req.params.id,
+      {
+        title: req.body.title,
+        description: req.body.description,
+        location: req.body.location,
+        category: req.body.category,
+        startTime: new Date(req.body.startTime),
+        endTime: new Date(req.body.endTime),
+        capacity: Number(req.body.capacity),
+      },
+      store
+    );
+});
 
   return router;
 }

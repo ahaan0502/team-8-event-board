@@ -19,6 +19,9 @@ import {
   touchAppSession,
 } from "./session/AppSession";
 import { ILoggingService } from "./service/LoggingService";
+import type { IEventController } from "./events/eventController";
+import type { RSVPDashboardController } from './rsvps/RSVPDashboardController'
+import { OrganizerDashboardController } from "./events/OrganizerDashboardController";
 
 type AsyncRequestHandler = RequestHandler;
 
@@ -38,8 +41,10 @@ class ExpressApp implements IApp {
   constructor(
     private readonly authController: IAuthController,
     private readonly eventController: IEventController,
+    private readonly rsvpDashboardController: RSVPDashboardController,
+    private readonly organizerDashboardController: OrganizerDashboardController,
     private readonly logger: ILoggingService,
-  ) {
+) {
     this.app = express();
     this.registerMiddleware();
     this.registerTemplating();
@@ -240,9 +245,175 @@ class ExpressApp implements IApp {
       }),
     );
 
-    // ── Event routes ─────────────────────────────────────────────────
+    // ── Event routes ────────────────────────────────────────────────
 
-    this.app.use(eventRoutes(this.eventController));
+this.app.get(
+  "/events/new",
+  asyncHandler(async (req, res) => {
+    if (!this.requireAuthenticated(req, res)) {
+      return;
+    }
+
+    const session = touchAppSession(sessionStore(req));
+    await this.eventController.showCreateEvent(res, session);
+  }),
+);
+
+this.app.post(
+  "/events",
+  asyncHandler(async (req, res) => {
+    if (!this.requireAuthenticated(req, res)) {
+      return;
+    }
+
+    await this.eventController.createEventFromForm(
+      res,
+      {
+        title: typeof req.body.title === "string" ? req.body.title : "",
+        description:
+          typeof req.body.description === "string" ? req.body.description : "",
+        location: typeof req.body.location === "string" ? req.body.location : "",
+        category: typeof req.body.category === "string" ? req.body.category : "",
+        startTime: new Date(req.body.startTime),
+        endTime: new Date(req.body.endTime),
+        capacity: Number(req.body.capacity),
+      },
+      sessionStore(req),
+    );
+  }),
+);
+
+this.app.get(
+  "/my-rsvps",
+  asyncHandler(async (req, res) => {
+    if (!this.requireAuthenticated(req, res)) {
+      return;
+    }
+
+    const user = getAuthenticatedUser(sessionStore(req));
+    if (!user) {
+      res.redirect("/login");
+      return;
+    }
+
+    const browserSession = recordPageView(sessionStore(req));
+
+    await this.rsvpDashboardController.getMyRsvpsPage(
+      req,
+      res,
+      user.userId,
+      browserSession
+    );
+  }),
+);
+
+this.app.get(
+  "/organizer/events",
+  asyncHandler(async (req, res) => {
+    if (!this.requireAuthenticated(req, res)) {
+      return;
+    }
+
+    const user = getAuthenticatedUser(sessionStore(req));
+    if (!user) {
+      res.redirect("/login");
+      return;
+    }
+
+    const browserSession = recordPageView(sessionStore(req));
+
+    await this.organizerDashboardController.getOrganizerDashboardPage(
+      req,
+      res,
+      user.userId,
+      browserSession
+    );
+  }),
+);
+    
+this.app.get(
+  "/events/:id/edit",
+  asyncHandler(async (req, res) => {
+    if (!this.requireAuthenticated(req, res)) {
+      return;
+    }
+
+    const eventId =
+      typeof req.params.id === "string" ? req.params.id : "";
+
+    const session = touchAppSession(sessionStore(req));
+
+    await this.eventController.showEditEvent(
+      res,
+      eventId,
+      sessionStore(req)
+    );
+  }),
+);
+
+this.app.get(
+  "/events/:id",
+  asyncHandler(async (req, res) => {
+    if (!this.requireAuthenticated(req, res)) {
+      return;
+    }
+
+    const eventId =
+      typeof req.params.id === "string" ? req.params.id : "";
+
+    await this.eventController.getEventDetail(
+      res,
+      eventId,
+      sessionStore(req)
+    );
+  }),
+);
+
+this.app.post(
+  "/events/:id",
+  asyncHandler(async (req, res) => {
+    if (!this.requireAuthenticated(req, res)) {
+      return;
+    }
+
+    const eventId =
+      typeof req.params.id === "string" ? req.params.id : "";
+
+    await this.eventController.updateEventFromForm(
+      res,
+      eventId,
+      {
+        title: typeof req.body.title === "string" ? req.body.title : "",
+        description:
+          typeof req.body.description === "string" ? req.body.description : "",
+        location: typeof req.body.location === "string" ? req.body.location : "",
+        category: typeof req.body.category === "string" ? req.body.category : "",
+        startTime: new Date(req.body.startTime),
+        endTime: new Date(req.body.endTime),
+        capacity: Number(req.body.capacity),
+      },
+      sessionStore(req)
+    );
+  })
+);
+
+this.app.post(
+  "/events/:id/rsvp",
+  asyncHandler(async (req, res) => {
+    if (!this.requireAuthenticated(req, res)) {
+      return;
+    }
+
+    const eventId =
+      typeof req.params.id === "string" ? req.params.id : "";
+
+    await this.eventController.toggleRSVP(
+      res,
+      eventId,
+      sessionStore(req)
+    );
+  })
+);
 
     // ── Authenticated home page ──────────────────────────────────────
     // TODO: Replace this placeholder with your project's main page.
@@ -280,7 +451,15 @@ class ExpressApp implements IApp {
 export function CreateApp(
   authController: IAuthController,
   eventController: IEventController,
+  rsvpDashboardController: RSVPDashboardController,
+  organizerDashboardController: OrganizerDashboardController,
   logger: ILoggingService,
 ): IApp {
-  return new ExpressApp(authController, eventController, logger);
+  return new ExpressApp(
+    authController,
+    eventController,
+    rsvpDashboardController,
+    organizerDashboardController,
+    logger
+  );
 }
