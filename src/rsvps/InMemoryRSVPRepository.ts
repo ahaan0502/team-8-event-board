@@ -11,6 +11,20 @@ const sampleRsvps: RSVP[] = [
     status: 'going',
     createdAt: new Date(),
   },
+  {
+    id: 'rsvp-2',
+    eventId: 'event-2',
+    userId: 'user-reader',
+    status: 'waitlisted',
+    createdAt: new Date(),
+  },
+  {
+    id: 'rsvp-3',
+    eventId: 'event-3',
+    userId: 'user-reader',
+    status: 'cancelled',
+    createdAt: new Date(),
+  },
 ]
   
   sampleRsvps.forEach(rsvp => rsvps.set(rsvp.id, rsvp))
