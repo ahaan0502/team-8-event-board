@@ -3,13 +3,16 @@ import type { IEventController } from "./eventController";
 import type { AppSessionStore } from "../session/AppSession";
 import { touchAppSession } from "../session/AppSession";
 
-export function eventRoutes(controller: IEventController) {
+export function eventRoutes(
+  controller: IEventController,
+  store: AppSessionStore
+) {
   const router = express.Router();
 
   router.get("/events/new", async (req, res) => {
-    const session = touchAppSession(req.session as AppSessionStore);
-    await controller.showCreateEvent(res, session);
-  });
+    const session = touchAppSession(store);
+  await controller.showCreateEvent(res, session);
+});
 
   router.post("/events", async (req, res) => {
     await controller.createEventFromForm(
@@ -23,7 +26,7 @@ export function eventRoutes(controller: IEventController) {
         endTime: new Date(req.body.endTime),
         capacity: Number(req.body.capacity),
       },
-      req.session as AppSessionStore
+      store
     );
   });
 

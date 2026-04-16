@@ -9,10 +9,6 @@ import {
 } from "./auth/errors";
 import type { UserRole } from "./auth/User";
 import { IApp } from "./contracts";
-import type { IEventController } from "./events/eventController";
-import { eventRoutes } from "./events/eventRoutes";
-import type { IAttendeeController } from "./rsvp/attendeeController";
-import { attendeeRoutes } from "./rsvp/attendeeRoutes";
 import {
   getAuthenticatedUser,
   isAuthenticatedSession,
@@ -394,6 +390,24 @@ this.app.post(
         endTime: new Date(req.body.endTime),
         capacity: Number(req.body.capacity),
       },
+      sessionStore(req)
+    );
+  })
+);
+
+this.app.post(
+  "/events/:id/rsvp",
+  asyncHandler(async (req, res) => {
+    if (!this.requireAuthenticated(req, res)) {
+      return;
+    }
+
+    const eventId =
+      typeof req.params.id === "string" ? req.params.id : "";
+
+    await this.eventController.toggleRSVP(
+      res,
+      eventId,
       sessionStore(req)
     );
   })

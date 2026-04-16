@@ -8,6 +8,7 @@ import {
 } from "../session/AppSession";
 import type { ILoggingService } from "../service/LoggingService";
 import type { EventError } from "./errors";
+import { IRSVPService } from "./rsvpService";
 
 export interface IEventController {
   showCreateEvent(
@@ -28,13 +29,6 @@ export interface IEventController {
     store: AppSessionStore
   ): Promise<void>;
 
-  publishEventFromForm(
-    res: Response,
-    eventId: string,
-    store: AppSessionStore
-  ): Promise<void>;
-
-  cancelEventFromForm(
     showEditEvent(
     res: Response,
     eventId: string,
@@ -48,11 +42,18 @@ export interface IEventController {
     input: Omit<CreateEventInput, "organizerId">,
     store: AppSessionStore
   ): Promise<void>;
+
+    toggleRSVP(
+    res: Response,
+    eventId: string,
+    store: AppSessionStore
+  ): Promise<void>;
 }
 
 class EventController implements IEventController {
   constructor(
     private readonly service: IEventService,
+    private readonly rsvpService: IRSVPService,
     private readonly logger: ILoggingService
   ) {}
 
@@ -212,35 +213,25 @@ class EventController implements IEventController {
     const user = getAuthenticatedUser(store);
 
     if (!user) {
-      res.status(403).render("partials/error", {
-        message: "You must be logged in.",
-        layout: false,
-      });
+      res.status(403).send("Must be logged in");
       return;
     }
 
-    const result = await this.service.cancelEvent(eventId, user.userId, user.role);
+    const result = await this.rsvpService.toggleRSVP(eventId, user.userId);
 
-    if (result.ok === false) {
-      const status = result.value.type === "NotFoundError" ? 404
-        : result.value.type === "NotAuthorizedError" ? 403
-        : 400;
-      this.logger.warn(`Cancel failed for event ${eventId}: ${result.value.message}`);
-      res.status(status).render("partials/error", {
-        message: result.value.message,
-        layout: false,
-      });
+    if (!result.ok) {
+      res.status(400).send(result.value.message);
       return;
     }
 
-    this.logger.info(`Cancelled event ${eventId}`);
     res.redirect(`/events/${eventId}`);
   }
 }
 
 export function CreateEventController(
   service: IEventService,
+  rsvpService: IRSVPService,
   logger: ILoggingService
 ): IEventController {
-  return new EventController(service, logger);
+  return new EventController(service, rsvpService, logger);
 }
