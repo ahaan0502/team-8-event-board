@@ -42,6 +42,12 @@ export interface IEventController {
     input: Omit<CreateEventInput, "organizerId">,
     store: AppSessionStore
   ): Promise<void>;
+
+    toggleRSVP(
+    res: Response,
+    eventId: string,
+    store: AppSessionStore
+  ): Promise<void>;
 }
 
 class EventController implements IEventController {

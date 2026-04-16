@@ -395,6 +395,24 @@ this.app.post(
   })
 );
 
+this.app.post(
+  "/events/:id/rsvp",
+  asyncHandler(async (req, res) => {
+    if (!this.requireAuthenticated(req, res)) {
+      return;
+    }
+
+    const eventId =
+      typeof req.params.id === "string" ? req.params.id : "";
+
+    await this.eventController.toggleRSVP(
+      res,
+      eventId,
+      sessionStore(req)
+    );
+  })
+);
+
     // ── Authenticated home page ──────────────────────────────────────
     // TODO: Replace this placeholder with your project's main page.
 
