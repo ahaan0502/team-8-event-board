@@ -65,14 +65,19 @@ export class InMemoryEventRepository implements EventRepository {
     return events.get(eventId) ?? null
   }
 
-  async getEventsByIds(eventIds: string[]): Promise<Event[]> {
-    const idSet = new Set(eventIds);
-    return Array.from(events.values()).filter(event => idSet.has(event.id));
+  async findById(id: string): Promise<Event | null> {
+    return this.events.get(id) ?? null;
   }
-  
-  async getEventsByOrganizerId(organizerId: string): Promise<Event[]> {
-    return Array.from(events.values()).filter(
-      event => event.organizerId === organizerId
-    );
+
+  async update(event: Event): Promise<Event> {
+    if (!this.events.has(event.id)) {
+      throw new Error(`Event ${event.id} not found`);
+    }
+    this.events.set(event.id, event);
+    return event;
   }
+}
+
+export function CreateInMemoryEventRepository(): EventRepository {
+  return new InMemoryEventRepository();
 }
