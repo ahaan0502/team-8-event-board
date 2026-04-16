@@ -60,12 +60,14 @@ class EventService implements IEventService {
       description,
       location: input.location,
       category: input.category,
-      startTime: input.startTime,
-      endTime: input.endTime,
+      status: 'draft',
       capacity: input.capacity,
+      startDatetime: input.startTime,
+      endDatetime: input.endTime,
       organizerId: input.organizerId,
-      status: "draft",
-    };
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }
 
     const created = await this.repo.create(event);
 
