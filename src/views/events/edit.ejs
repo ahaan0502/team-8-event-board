@@ -9,41 +9,41 @@
     <form method="POST" action="/events/<%= event.id %>">
       <div>
         <label>Title</label>
-        <input type="text" name="title" required />
+        <input type="text" name="title" value="<%= event.title %>" required />
       </div>
 
       <div>
         <label>Description</label>
-        <textarea name="description" required></textarea>
+        <textarea name="description" required><%= event.description %></textarea>
       </div>
 
       <div>
         <label>Location</label>
-        <input type="text" name="location" required />
+        <input type="text" name="location" value="<%= event.location %>" required />
       </div>
 
       <div>
         <label>Category</label>
-        <input type="text" name="category" required />
+        <input type="text" name="category" value="<%= event.category %>" required />
       </div>
 
       <div>
         <label>Start Time</label>
-        <input type="datetime-local" name="startTime" required />
+        <input type="datetime-local" name="startTime" value="<%= new Date(event.startTime).toISOString().slice(0,16) %>" required />
       </div>
 
       <div>
         <label>End Time</label>
-        <input type="datetime-local" name="endTime" required />
+        <input type="datetime-local" name="endTime" value="<%= new Date(event.endTime).toISOString().slice(0,16) %>" required />
       </div>
 
       <div>
         <label>Capacity</label>
-        <input type="number" name="capacity" min="1" required />
+        <input type="number" name="capacity" min="1" value="<%= event.capacity %>" required />
       </div>
 
       <button type="submit">Update Event</button>
     </form>
-    
+
   </body>
 </html>
