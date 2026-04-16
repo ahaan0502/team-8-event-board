@@ -6,9 +6,11 @@ export interface Event {
   description: string;
   location: string;
   category: string;
-  startTime: Date;
-  endTime: Date;
-  capacity: number;
+  startDatetime: Date;
+  endDatetime: Date;
+  capacity?: number;
   organizerId: string;
   status: EventStatus;
+  createdAt: Date;
+  updatedAt: Date;
 }
