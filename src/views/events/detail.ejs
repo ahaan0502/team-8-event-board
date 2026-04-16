@@ -8,12 +8,12 @@
 
 <p>
   <strong>Start:</strong>
-  <%= event.startTime ? new Date(event.startTime).toLocaleString() : "N/A" %>
+  <%= event.startDatetime ? new Date(event.startDatetime).toLocaleString() : "N/A" %>
 </p>
 
 <p>
   <strong>End:</strong>
-  <%= event.endTime ? new Date(event.endTime).toLocaleString() : "N/A" %>
+  <%= event.endDatetime ? new Date(event.endDatetime).toLocaleString() : "N/A" %>
 </p>
 
 <p><strong>Capacity:</strong> <%= event.capacity %></p>

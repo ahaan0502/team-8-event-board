@@ -29,12 +29,12 @@
 
       <div>
         <label>Start Time</label>
-        <input type="datetime-local" name="startTime" value="<%= new Date(event.startTime).toISOString().slice(0,16) %>" required />
+        <input type="datetime-local" name="startTime" value="<%= new Date(event.startDatetime).toISOString().slice(0,16) %>" required />
       </div>
 
       <div>
         <label>End Time</label>
-        <input type="datetime-local" name="endTime" value="<%= new Date(event.endTime).toISOString().slice(0,16) %>" required />
+        <input type="datetime-local" name="endTime" value="<%= new Date(event.endDatetime).toISOString().slice(0,16) %>" required />
       </div>
 
       <div>
