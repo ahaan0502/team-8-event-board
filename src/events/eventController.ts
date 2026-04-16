@@ -22,11 +22,11 @@ export interface IEventController {
     store: AppSessionStore
   ): Promise<void>;
 
-    /*getEventDetail(
+    getEventDetail(
     res: Response,
     eventId: string,
     store: AppSessionStore
-  ): Promise<void>;*/
+  ): Promise<void>;
 
     showEditEvent(
     res: Response,

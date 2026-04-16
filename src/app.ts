@@ -278,7 +278,7 @@ this.app.post(
   }),
 );
 
-this.app.get(
+/*this.app.get(
   "/events/:id",
   asyncHandler(async (req, res) => {
     if (!this.requireAuthenticated(req, res)) {
@@ -294,7 +294,7 @@ this.app.get(
       sessionStore(req)
     );
   }),
-);
+);*/
 
     // ── Authenticated home page ──────────────────────────────────────
     // TODO: Replace this placeholder with your project's main page.
