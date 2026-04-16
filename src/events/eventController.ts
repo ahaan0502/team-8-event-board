@@ -8,7 +8,6 @@ import {
 } from "../session/AppSession";
 import type { ILoggingService } from "../service/LoggingService";
 import type { EventError } from "./errors";
-import { IRSVPService } from "./rsvpService";
 
 export interface IEventController {
   showCreateEvent(
@@ -49,18 +48,11 @@ export interface IEventController {
     input: Omit<CreateEventInput, "organizerId">,
     store: AppSessionStore
   ): Promise<void>;
-
-    toggleRSVP(
-    res: Response,
-    eventId: string,
-    store: AppSessionStore
-  ): Promise<void>;
 }
 
 class EventController implements IEventController {
   constructor(
     private readonly service: IEventService,
-    private readonly rsvpService: IRSVPService,
     private readonly logger: ILoggingService
   ) {}
 
@@ -248,8 +240,7 @@ class EventController implements IEventController {
 
 export function CreateEventController(
   service: IEventService,
-  rsvpService: IRSVPService,
   logger: ILoggingService
 ): IEventController {
-  return new EventController(service, rsvpService, logger);
+  return new EventController(service, logger);
 }

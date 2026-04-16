@@ -38,23 +38,11 @@ export function createComposedApp(logger?: ILoggingService): IApp {
   // Event wiring
   const eventRepo = new InMemoryEventRepository();
   const eventService = CreateEventService(eventRepo);
-
-  // RSVP wiring (NEW)
-  const rsvpRepo = CreateRSVPRepository();
-  const rsvpService = CreateRSVPService(rsvpRepo, eventRepo);
-
-  const eventController = CreateEventController(
-  eventService,
-  rsvpService,
-  resolvedLogger
-);
+  const eventController = CreateEventController(eventService, resolvedLogger);
 
   // RSVP dashboard wiring
-  const dashboardRsvpRepo = new InMemoryRSVPRepository();
-  const rsvpDashboardService = CreateRSVPDashboardService(
-  dashboardRsvpRepo,
-  eventRepo
-);
+  const rsvpRepo = new InMemoryRSVPRepository();
+  const rsvpDashboardService = CreateRSVPDashboardService(rsvpRepo, eventRepo);
   const rsvpDashboardController = new RSVPDashboardController(
     rsvpDashboardService
   );
@@ -62,7 +50,7 @@ export function createComposedApp(logger?: ILoggingService): IApp {
   // Organizer dashboard wiring
   const organizerDashboardService = CreateOrganizerDashboardService(
     eventRepo,
-    dashboardRsvpRepo
+    rsvpRepo
   );
   const organizerDashboardController = new OrganizerDashboardController(
     organizerDashboardService
