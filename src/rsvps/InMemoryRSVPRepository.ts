@@ -4,14 +4,14 @@ import type { RSVPRepository } from './RSVPRepository'
 const rsvps = new Map<string, RSVP>()
 
 const sampleRsvps: RSVP[] = [
-    {
-      id: 'rsvp-1',
-      eventId: 'event-1',
-      userId: 'user@app.test',
-      status: 'going',
-      createdAt: new Date(),
-    },
-  ]
+  {
+    id: 'rsvp-1',
+    eventId: 'event-1',
+    userId: 'user-reader',
+    status: 'going',
+    createdAt: new Date(),
+  },
+]
   
   sampleRsvps.forEach(rsvp => rsvps.set(rsvp.id, rsvp))
 
