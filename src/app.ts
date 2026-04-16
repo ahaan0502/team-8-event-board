@@ -292,10 +292,13 @@ this.app.get(
       return;
     }
 
+    const browserSession = recordPageView(sessionStore(req));
+
     await this.rsvpDashboardController.getMyRsvpsPage(
       req,
       res,
-      user.userId
+      user.userId,
+      browserSession
     );
   }),
 );
