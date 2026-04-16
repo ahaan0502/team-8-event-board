@@ -1,5 +1,5 @@
 import { Ok, Err, type Result } from "../lib/result";
-import { ValidationError, type EventError } from "./errors";
+import { ValidationError, type EventError, NotFoundError } from "./errors";
 import { Event } from "./event";
 import type { EventRepository } from "./eventRepository";
 
@@ -17,6 +17,10 @@ export interface CreateEventInput {
 export interface IEventService {
   createEvent(input: CreateEventInput): Promise<Result<Event, EventError>>;
   updateEvent(eventId: string, input: Omit<CreateEventInput, "organizerId">, actingUserId: string): Promise<Result<Event, EventError>>;
+  getEventById(
+    eventId: string,
+    actingUserId?: string
+  ): Promise<Result<Event, EventError>>;
 }
 
 class EventService implements IEventService {
@@ -66,6 +70,25 @@ class EventService implements IEventService {
     const created = await this.repo.create(event);
 
     return Ok(created);
+  }
+
+  async getEventById(
+    eventId: string,
+    actingUserId?: string
+  ): Promise<Result<Event, EventError>> {
+
+    const event = await this.repo.getEventById(eventId);
+
+    if (!event) {
+      return Err(NotFoundError("Event not found."));
+    }
+
+    // Draft visibility rule
+    if (event.status === "draft" && event.organizerId !== actingUserId) {
+      return Err(NotFoundError("Event not found."));
+    }
+
+    return Ok(event);
   }
 
   async updateEvent(
