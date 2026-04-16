@@ -139,7 +139,18 @@ class EventController implements IEventController {
   session: IAppBrowserSession,
   pageError: string | null = null
   ): Promise<void> {
-    res.render("events/edit", { eventId, pageError, session });
+    const result = await this.service.getEventById(eventId);
+
+    if (result.ok === false) {
+      res.status(404).send("Event not found");
+      return;
+    }
+
+    res.render("events/edit", {
+      event: result.value,
+      session,
+      pageError,
+    });
   }
 
   async updateEventFromForm(
