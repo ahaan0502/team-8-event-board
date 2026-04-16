@@ -1,3 +1,5 @@
+import { randomUUID } from "crypto";
+
 export type RSVPStatus = "going" | "waitlisted" | "cancelled";
 
 export interface RSVP {
@@ -32,12 +34,21 @@ class InMemoryRSVPRepository implements RSVPRepository {
   }
 
   async create(rsvp: RSVP) {
-    this.rsvps.set(rsvp.id, rsvp);
-    return rsvp;
+    const newRSVP = {
+        ...rsvp,
+        id: randomUUID(),
+    };
+
+    this.rsvps.set(newRSVP.id, newRSVP);
+    return newRSVP;
   }
 
   async update(rsvp: RSVP) {
     this.rsvps.set(rsvp.id, rsvp);
     return rsvp;
   }
+}
+
+export function CreateRSVPRepository(): RSVPRepository {
+  return new InMemoryRSVPRepository();
 }
