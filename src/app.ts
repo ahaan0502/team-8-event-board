@@ -19,6 +19,7 @@ import {
 import { ILoggingService } from "./service/LoggingService";
 import type { IEventController } from "./events/eventController";
 import type { RSVPDashboardController } from './rsvps/RSVPDashboardController'
+import { OrganizerDashboardController } from "./events/OrganizerDashboardController";
 
 type AsyncRequestHandler = RequestHandler;
 
@@ -39,6 +40,7 @@ class ExpressApp implements IApp {
     private readonly authController: IAuthController,
     private readonly eventController: IEventController,
     private readonly rsvpDashboardController: RSVPDashboardController,
+    private readonly organizerDashboardController: OrganizerDashboardController,
     private readonly logger: ILoggingService,
 ) {
     this.app = express();
@@ -303,6 +305,30 @@ this.app.get(
   }),
 );
 
+this.app.get(
+  "/organizer/events",
+  asyncHandler(async (req, res) => {
+    if (!this.requireAuthenticated(req, res)) {
+      return;
+    }
+
+    const user = getAuthenticatedUser(sessionStore(req));
+    if (!user) {
+      res.redirect("/login");
+      return;
+    }
+
+    const browserSession = recordPageView(sessionStore(req));
+
+    await this.organizerDashboardController.getOrganizerDashboardPage(
+      req,
+      res,
+      user.userId,
+      browserSession
+    );
+  }),
+);
+
 /*this.app.get(
   "/events/:id",
   asyncHandler(async (req, res) => {
@@ -358,12 +384,14 @@ export function CreateApp(
   authController: IAuthController,
   eventController: IEventController,
   rsvpDashboardController: RSVPDashboardController,
+  organizerDashboardController: OrganizerDashboardController,
   logger: ILoggingService,
 ): IApp {
   return new ExpressApp(
     authController,
     eventController,
     rsvpDashboardController,
+    organizerDashboardController,
     logger
   );
 }

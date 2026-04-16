@@ -8,6 +8,8 @@ import type { IApp } from "./contracts";
 import { InMemoryEventRepository } from "./events/inMemoryEventRepository";
 import { CreateEventController } from "./events/eventController";
 import { CreateEventService } from "./events/eventService";
+import { CreateOrganizerDashboardService } from "./events/OrganizerDashboardService";
+import { OrganizerDashboardController } from "./events/OrganizerDashboardController";
 import { InMemoryRSVPRepository } from "./rsvps/InMemoryRSVPRepository";
 import { RSVPDashboardController } from "./rsvps/RSVPDashboardController";
 import { CreateRSVPDashboardService } from "./rsvps/RSVPDashboardService";
@@ -40,10 +42,20 @@ export function createComposedApp(logger?: ILoggingService): IApp {
     rsvpDashboardService
   );
 
+  // Organizer dashboard wiring
+  const organizerDashboardService = CreateOrganizerDashboardService(
+    eventRepo,
+    rsvpRepo
+  );
+  const organizerDashboardController = new OrganizerDashboardController(
+    organizerDashboardService
+  );
+
   return CreateApp(
     authController,
     eventController,
     rsvpDashboardController,
+    organizerDashboardController,
     resolvedLogger
   );
 }
