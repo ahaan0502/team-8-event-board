@@ -1,0 +1,22 @@
+<h1>My RSVPs</h1>
+
+<h2>Going</h2>
+<% dashboard.going.forEach(item => { %>
+  <div>
+    <strong><%= item.event.title %></strong>
+  </div>
+<% }) %>
+
+<h2>Waitlisted</h2>
+<% dashboard.waitlisted.forEach(item => { %>
+  <div>
+    <strong><%= item.event.title %></strong>
+  </div>
+<% }) %>
+
+<h2>Cancelled</h2>
+<% dashboard.cancelled.forEach(item => { %>
+  <div>
+    <strong><%= item.event.title %></strong>
+  </div>
+<% }) %>
