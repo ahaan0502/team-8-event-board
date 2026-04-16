@@ -30,6 +30,20 @@ const sampleEvents: Event[] = [
     createdAt: new Date(),
     updatedAt: new Date(),
   },
+  {
+    id: 'event-3',
+    title: 'Spring Concert',
+    description: 'Live music event.',
+    location: 'Campus Center',
+    category: 'Entertainment',
+    status: 'published',
+    capacity: 100,
+    startDatetime: new Date('2026-04-25T19:00:00'),
+    endDatetime: new Date('2026-04-25T21:00:00'),
+    organizerId: 'staff@app.test',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
 ]
 
 const events = new Map<string, Event>(
@@ -38,6 +52,11 @@ const events = new Map<string, Event>(
 
 export class InMemoryEventRepository implements EventRepository {
   async create(event: Event): Promise<Event> {
+    events.set(event.id, event)
+    return event
+  }
+
+  async update(event: Event): Promise<Event> {
     events.set(event.id, event)
     return event
   }

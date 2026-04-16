@@ -96,36 +96,57 @@ class EventService implements IEventService {
   async updateEvent(
     eventId: string,
     input: Omit<CreateEventInput, "organizerId">,
-    actingUserId: string): Promise<Result<Event, EventError>> {
-      const event = await this.repo.getEventById(eventId);
-
-      if (!event) {
-        return Err(ValidationError("Event not found"));
-      }
-      if (event.organizerId !== actingUserId) {
-        return Err(ValidationError("Not authorized to edit this event"));
-      }
-      if (event.status === "cancelled" || event.status === "past") {
-        return Err(ValidationError("Cannot edit this event"));
-      }
-      const validation = await this.createEvent({
-        ...input,
-        organizerId: event.organizerId,
-      });
-
-      if (!validation.ok) {
-        return validation;
-      }
-
-      const updated: Event = {
-        ...event,
-        ...input,
-      };
-
-      const saved = await this.repo.update(updated);
-
-      return Ok(saved);
-    } 
+    actingUserId: string
+  ): Promise<Result<Event, EventError>> {
+    const event = await this.repo.getEventById(eventId)
+  
+    if (!event) {
+      return Err(NotFoundError("Event not found."))
+    }
+  
+    if (event.organizerId !== actingUserId) {
+      return Err(ValidationError("Not authorized to edit this event."))
+    }
+  
+    if (event.status === "cancelled" || event.status === "past") {
+      return Err(ValidationError("Cannot edit this event."))
+    }
+  
+    const title = input.title.trim()
+    const description = input.description.trim()
+  
+    if (!title) {
+      return Err(ValidationError("Title is required."))
+    }
+  
+    if (!description) {
+      return Err(ValidationError("Description is required."))
+    }
+  
+    if (input.endTime <= input.startTime) {
+      return Err(ValidationError("End time must be after start time."))
+    }
+  
+    if (input.capacity <= 0) {
+      return Err(ValidationError("Capacity must be greater than 0."))
+    }
+  
+    const updated: Event = {
+      ...event,
+      title,
+      description,
+      location: input.location,
+      category: input.category,
+      capacity: input.capacity,
+      startDatetime: input.startTime,
+      endDatetime: input.endTime,
+      updatedAt: new Date(),
+    }
+  
+    const saved = await this.repo.update(updated)
+  
+    return Ok(saved)
+  }
 }
 
 export function CreateEventService(
