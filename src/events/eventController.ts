@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import type { IEventService } from "./eventService";
+import { touchAppSession } from "../session/AppSession";
 
 export interface IEventController {
   listEvents(req: Request, res: Response): Promise<void>;
@@ -15,17 +16,20 @@ class EventController implements IEventController {
     const date =
       typeof req.query.date === "string" ? req.query.date : undefined;
 
+    const session = touchAppSession(req.session as any);
+
     const result = await this.service.listEvents({
       q,
       category,
       date,
     });
 
-    if (!result.ok) {
+    if (result.ok === false) {
       res.status(400).render("events/index", {
         events: [],
         filters: { q, category, date },
         pageError: result.value.message,
+        session,
       });
       return;
     }
@@ -34,6 +38,7 @@ class EventController implements IEventController {
       events: result.value,
       filters: { q, category, date },
       pageError: null,
+      session,
     });
   }
 }

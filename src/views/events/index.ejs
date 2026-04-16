@@ -25,12 +25,25 @@
 
       <div>
         <label for="category">Category</label>
-        <input
-          type="text"
-          id="category"
-          name="category"
-          value="<%= filters?.category ?? '' %>"
-        />
+        <select id="category" name="category">
+          <option value="">All</option>
+
+          <option value="Music" <%= filters?.category === "Music" ? "selected" : "" %>>
+            Music
+          </option>
+
+          <option value="Tech" <%= filters?.category === "Tech" ? "selected" : "" %>>
+            Tech
+          </option>
+
+          <option value="Career" <%= filters?.category === "Career" ? "selected" : "" %>>
+            Career
+          </option>
+
+          <option value="Planning" <%= filters?.category === "Planning" ? "selected" : "" %>>
+            Planning
+          </option>
+        </select>
       </div>
 
       <div>
