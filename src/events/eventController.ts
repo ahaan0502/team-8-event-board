@@ -8,6 +8,7 @@ import {
 } from "../session/AppSession";
 import type { ILoggingService } from "../service/LoggingService";
 import type { EventError } from "./errors";
+import { IRSVPService } from "./rsvpService";
 
 export interface IEventController {
   showCreateEvent(
@@ -41,11 +42,18 @@ export interface IEventController {
     input: Omit<CreateEventInput, "organizerId">,
     store: AppSessionStore
   ): Promise<void>;
+
+    toggleRSVP(
+    res: Response,
+    eventId: string,
+    store: AppSessionStore
+  ): Promise<void>;
 }
 
 class EventController implements IEventController {
   constructor(
     private readonly service: IEventService,
+    private readonly rsvpService: IRSVPService,
     private readonly logger: ILoggingService
   ) {}
 
@@ -196,11 +204,34 @@ class EventController implements IEventController {
     this.logger.info(`Updated event ${eventId}`);
     res.redirect(`/events/${eventId}`);
   }
+
+  async toggleRSVP(
+    res: Response,
+    eventId: string,
+    store: AppSessionStore
+  ): Promise<void> {
+    const user = getAuthenticatedUser(store);
+
+    if (!user) {
+      res.status(403).send("Must be logged in");
+      return;
+    }
+
+    const result = await this.rsvpService.toggleRSVP(eventId, user.userId);
+
+    if (!result.ok) {
+      res.status(400).send(result.value.message);
+      return;
+    }
+
+    res.redirect(`/events/${eventId}`);
+  }
 }
 
 export function CreateEventController(
   service: IEventService,
+  rsvpService: IRSVPService,
   logger: ILoggingService
 ): IEventController {
-  return new EventController(service, logger);
+  return new EventController(service, rsvpService, logger);
 }
