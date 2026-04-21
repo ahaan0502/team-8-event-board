@@ -1,5 +1,5 @@
 import { Ok, Err, type Result } from "../lib/result";
-import { ValidationError, type EventError, NotFoundError } from "./errors";
+import { ValidationError, type EventError, NotFoundError, InvalidTimeRangeError, InvalidCapacityError } from "./errors";
 import { Event } from "./event";
 import type { EventRepository } from "./eventRepository";
 
@@ -43,13 +43,13 @@ class EventService implements IEventService {
 
     if (input.endTime <= input.startTime) {
       return Err(
-        ValidationError("End time must be after start time.")
+        InvalidTimeRangeError("End time must be after start time.")
       );
     }
 
     if (input.capacity <= 0) {
       return Err(
-        ValidationError("Capacity must be greater than 0.")
+        InvalidCapacityError("Capacity must be greater than 0.")
       );
     }
 
