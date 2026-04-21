@@ -1,0 +1,15 @@
+<div id="rsvp-section">
+  <form
+    hx-post="/events/<%= event.id %>/rsvp"
+    hx-target="#rsvp-section"
+    hx-swap="outerHTML"
+  >
+    <button type="submit">
+      Toggle RSVP
+    </button>
+  </form>
+
+  <p>
+    Your RSVP: <%= event.rsvpStatus || "none" %>
+  </p>
+</div>
