@@ -52,4 +52,18 @@ describe("RSVP endpoint", () => {
     expect(createRes.status).toBe(302);
     expect(eventId).toBeTruthy();
   });
+
+  it("returns 200 and an HTML fragment for a valid RSVP toggle", async () => {
+    const { eventId } = await createEvent();
+
+    const res = await request(app)
+      .post(`/events/${eventId}/rsvp`)
+      .set("Cookie", authCookie)
+      .set("HX-Request", "true");
+
+    expect(res.status).toBe(200);
+    expect(res.text).toContain('id="rsvp-section"');
+    expect(res.text).toContain("Toggle RSVP");
+    expect(res.text).toContain("Your RSVP:");
+  });
 });
