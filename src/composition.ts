@@ -4,6 +4,9 @@ import { CreateAuthService } from "./auth/AuthService";
 import { CreateInMemoryUserRepository } from "./auth/InMemoryUserRepository";
 import { CreatePasswordHasher } from "./auth/PasswordHasher";
 import { CreateApp } from "./app";
+import { CreateAttendeeService } from "./rsvp/attendeeService";
+import { CreateAttendeeController } from "./rsvp/attendeeController";
+import type { IAttendeeController } from "./rsvp/attendeeController";
 import type { IApp } from "./contracts";
 import { InMemoryEventRepository } from "./events/inMemoryEventRepository";
 import { CreateEventController } from "./events/eventController";
@@ -46,6 +49,10 @@ export function createComposedApp(logger?: ILoggingService): IApp {
   resolvedLogger
 );
 
+  // Attendee list wiring
+  const attendeeService = CreateAttendeeService(rsvpRepo, authUsers, eventService);
+  const attendeeController = CreateAttendeeController(attendeeService, resolvedLogger);
+
   // RSVP dashboard wiring
   const dashboardRsvpRepo = new InMemoryRSVPRepository();
   const rsvpDashboardService = CreateRSVPDashboardService(
@@ -70,6 +77,7 @@ export function createComposedApp(logger?: ILoggingService): IApp {
     eventController,
     rsvpDashboardController,
     organizerDashboardController,
+    attendeeController,
     resolvedLogger
   );
 }
