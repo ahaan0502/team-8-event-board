@@ -1,5 +1,5 @@
 import { Ok, Err, type Result } from "../lib/result";
-import { ValidationError, type EventError } from "./errors";
+import { NotFoundError, UnauthorizedError, ValidationError, type EventError } from "./errors";
 import type { RSVPRepository, RSVP } from "./rsvpRepository";
 import type { EventRepository } from "./eventRepository";
 
@@ -23,12 +23,12 @@ class RSVPService implements IRSVPService {
   const event = await this.eventRepo.getEventById(eventId);
 
   if (!event) {
-    return Err(ValidationError("Event not found"));
+    return Err(NotFoundError("Event not found"));
   }
 
   // Organizer cannot RSVP
   if (event.organizerId === userId) {
-    return Err(ValidationError("Organizer cannot RSVP"));
+    return Err(UnauthorizedError("Organizer cannot RSVP"));
   }
 
   // Cannot RSVP to invalid events
