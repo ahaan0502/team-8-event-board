@@ -11,11 +11,11 @@ export function UnauthorizedError(message: string) {
 }
 
 export function InvalidTimeRangeError(message: string) {
-  return { type: "ValidationError" as const, message };
+  return { type: "InvalidTimeRangeError" as const, message };
 }
 
 export function InvalidCapacityError(message: string) {
-  return { type: "ValidationError" as const, message };
+  return { type: "InvalidCapacityError" as const, message };
 }
 
 export function InvalidStateError(message: string) {
