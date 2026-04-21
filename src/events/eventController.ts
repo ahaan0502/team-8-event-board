@@ -11,43 +11,14 @@ import type { EventError } from "./errors";
 import { IRSVPService } from "./rsvpService";
 
 export interface IEventController {
-  showCreateEvent(
-    res: Response,
-    session: IAppBrowserSession,
-    pageError?: string | null
-  ): Promise<void>;
-
-  createEventFromForm(
-    res: Response,
-    input: Omit<CreateEventInput, "organizerId">,
-    store: AppSessionStore
-  ): Promise<void>;
-
-    getEventDetail(
-    res: Response,
-    eventId: string,
-    store: AppSessionStore
-  ): Promise<void>;
-
-    showEditEvent(
-    res: Response,
-    eventId: string,
-    session: AppSessionStore,
-    pageError?: string | null
-  ): Promise<void>;
-
-    updateEventFromForm(
-    res: Response,
-    eventId: string,
-    input: Omit<CreateEventInput, "organizerId">,
-    store: AppSessionStore
-  ): Promise<void>;
-
-    toggleRSVP(
-    res: Response,
-    eventId: string,
-    store: AppSessionStore
-  ): Promise<void>;
+  showCreateEvent(res: Response, session: IAppBrowserSession, pageError?: string | null): Promise<void>;
+  createEventFromForm(res: Response, input: Omit<CreateEventInput, "organizerId">, store: AppSessionStore): Promise<void>;
+  getEventDetail(res: Response, eventId: string, store: AppSessionStore): Promise<void>;
+  showEditEvent(res: Response, eventId: string, session: AppSessionStore, pageError?: string | null): Promise<void>;
+  updateEventFromForm(res: Response, eventId: string, input: Omit<CreateEventInput, "organizerId">, store: AppSessionStore): Promise<void>;
+  toggleRSVP(res: Response, eventId: string, store: AppSessionStore): Promise<void>;
+  publishEventFromForm(res: Response, eventId: string, store: AppSessionStore, htmx?: boolean): Promise<void>;
+  cancelEventFromForm(res: Response, eventId: string, store: AppSessionStore, htmx?: boolean): Promise<void>;
 }
 
 class EventController implements IEventController {
@@ -224,6 +195,68 @@ class EventController implements IEventController {
       return;
     }
 
+    res.redirect(`/events/${eventId}`);
+  }
+
+  async publishEventFromForm(
+    res: Response,
+    eventId: string,
+    store: AppSessionStore,
+    htmx = false
+  ): Promise<void> {
+    const user = getAuthenticatedUser(store);
+    if (!user) {
+      res.status(403).render("partials/error", { message: "You must be logged in.", layout: false });
+      return;
+    }
+
+    const result = await this.service.publishEvent(eventId, user.userId, user.role);
+
+    if (result.ok === false) {
+      const status = result.value.type === "NotFoundError" ? 404
+        : result.value.type === "NotAuthorizedError" ? 403 : 400;
+      this.logger.warn(`Publish failed for ${eventId}: ${result.value.message}`);
+      res.status(status).render("partials/error", { message: result.value.message, layout: false });
+      return;
+    }
+
+    this.logger.info(`Published event ${eventId}`);
+    if (htmx) {
+      const session = touchAppSession(store);
+      res.render("events/partials/organizer-controls", { event: result.value, session, layout: false });
+      return;
+    }
+    res.redirect(`/events/${eventId}`);
+  }
+
+  async cancelEventFromForm(
+    res: Response,
+    eventId: string,
+    store: AppSessionStore,
+    htmx = false
+  ): Promise<void> {
+    const user = getAuthenticatedUser(store);
+    if (!user) {
+      res.status(403).render("partials/error", { message: "You must be logged in.", layout: false });
+      return;
+    }
+
+    const result = await this.service.cancelEvent(eventId, user.userId, user.role);
+
+    if (result.ok === false) {
+      const status = result.value.type === "NotFoundError" ? 404
+        : result.value.type === "NotAuthorizedError" ? 403 : 400;
+      this.logger.warn(`Cancel failed for ${eventId}: ${result.value.message}`);
+      res.status(status).render("partials/error", { message: result.value.message, layout: false });
+      return;
+    }
+
+    this.logger.info(`Cancelled event ${eventId}`);
+    if (htmx) {
+      const session = touchAppSession(store);
+      res.render("events/partials/organizer-controls", { event: result.value, session, layout: false });
+      return;
+    }
     res.redirect(`/events/${eventId}`);
   }
 }
