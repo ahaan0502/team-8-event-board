@@ -32,8 +32,5 @@ export function InvalidCapacityError(message: string) {
 
 
 export function NotFoundError(message: string) {
-  return { 
-    type: "NotFoundError", 
-    message 
-  };
+  return { type: "NotFoundError", message };
 }
