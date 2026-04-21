@@ -66,4 +66,26 @@ describe("RSVP endpoint", () => {
     expect(res.text).toContain("Toggle RSVP");
     expect(res.text).toContain("Your RSVP:");
   });
+
+  it("returns 401 for an unauthenticated RSVP request", async () => {
+    const { eventId } = await createEvent();
+
+    const res = await request(app)
+      .post(`/events/${eventId}/rsvp`)
+      .set("HX-Request", "true");
+
+    expect(res.status).toBe(401);
+    expect(res.text).toContain("Please log in to continue.");
+  });
+
+  it("returns 400 when the event does not exist", async () => {
+    const res = await request(app)
+      .post("/events/not-a-real-event-id/rsvp")
+      .set("Cookie", authCookie)
+      .set("HX-Request", "true");
+
+    expect(res.status).toBe(400);
+    expect(res.text).toContain("Event not found");
+  });
+  
 });
