@@ -65,5 +65,9 @@ export function eventRoutes(
     );
 });
 
+router.post("/events/:id/rsvp", async (req, res) => {
+  await controller.toggleRSVP(res, req.params.id, store);
+});
+
   return router;
 }

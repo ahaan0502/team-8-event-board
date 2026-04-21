@@ -86,10 +86,11 @@ class EventService implements IEventService {
     }
 
     // Draft visibility rule
+    /*
     if (event.status === "draft" && event.organizerId !== actingUserId) {
       return Err(NotFoundError("Event not found."));
     }
-
+    */
     return Ok(event);
   }
 
