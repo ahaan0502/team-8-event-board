@@ -219,7 +219,7 @@ class EventController implements IEventController {
     const result = await this.rsvpService.toggleRSVP(eventId, user.userId);
 
     if (result.ok === false) {
-      res.status(400).send(result.value.message);
+      res.status(404).send(result.value.message);
       return;
     }
 
