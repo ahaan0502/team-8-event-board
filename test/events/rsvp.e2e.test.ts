@@ -88,4 +88,21 @@ describe("RSVP endpoint", () => {
     expect(res.text).toContain("Event not found");
   });
   
+  it("allows toggling RSVP twice for the same event", async () => {
+    const { eventId } = await createEvent();
+
+    const firstRes = await request(app)
+      .post(`/events/${eventId}/rsvp`)
+      .set("Cookie", authCookie)
+      .set("HX-Request", "true");
+
+    const secondRes = await request(app)
+      .post(`/events/${eventId}/rsvp`)
+      .set("Cookie", authCookie)
+      .set("HX-Request", "true");
+
+    expect(firstRes.status).toBe(200);
+    expect(secondRes.status).toBe(200);
+    expect(secondRes.text).toContain('id="rsvp-section"');
+  });
 });
