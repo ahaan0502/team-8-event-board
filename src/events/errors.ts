@@ -1,5 +1,7 @@
 export type EventError =
   | ReturnType<typeof ValidationError>
+  | ReturnType<typeof NotFoundError>
+  | ReturnType<typeof UnauthorizedError>;
   | ReturnType<typeof InvalidTimeRangeError>
   | ReturnType<typeof InvalidCapacityError>;
 
@@ -8,6 +10,10 @@ export function ValidationError(message: string) {
     type: "ValidationError",
     message,
   };
+}
+
+export function UnauthorizedError(message: string) {
+  return { type: "UnauthorizedError", message };
 }
 
 export function InvalidTimeRangeError(message: string) {
