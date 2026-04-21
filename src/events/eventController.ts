@@ -224,7 +224,17 @@ class EventController implements IEventController {
       return;
     }
 
-    res.redirect(`/events/${eventId}`);
+    const eventResult = await this.service.getEventById(eventId, user.userId);
+
+    if (eventResult.ok === false) {
+      res.status(500).send("Failed to reload event");
+      return;
+    }
+
+    res.render("events/partials/rsvpSection", {
+      event: eventResult.value,
+      layout: false,
+    });
   }
 }
 
