@@ -1,5 +1,11 @@
 export type EventError =
-  | ReturnType<typeof ValidationError>;
+  | ReturnType<typeof ValidationError>
+  | ReturnType<typeof NotFoundError>
+  | ReturnType<typeof UnauthorizedError>;
+
+export function UnauthorizedError(message: string) {
+  return { type: "UnauthorizedError", message };
+}
 
 export function ValidationError(message: string) {
   return {
@@ -8,6 +14,6 @@ export function ValidationError(message: string) {
   };
 }
 
-export function NotFoundError(message: string): EventError {
+export function NotFoundError(message: string) {
   return { type: "NotFoundError", message };
 }
