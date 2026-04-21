@@ -22,12 +22,18 @@
 
 <p><strong>Organizer ID:</strong> <%= event.organizerId %></p>
 
-<form method="POST" action="/events/<%= event.id %>/rsvp">
-  <button type="submit">
-    Toggle RSVP
-  </button>
-</form>
+<div id="rsvp-section">
+  <form
+    hx-post="/events/<%= event.id %>/rsvp"
+    hx-target="#rsvp-section"
+    hx-swap="outerHTML"
+  >
+    <button type="submit">
+      Toggle RSVP
+    </button>
+  </form>
 
-<p>
-  Your RSVP: <%= event.rsvpStatus || "none" %>
-</p>
+  <p>
+    Your RSVP: <%= event.rsvpStatus || "none" %>
+  </p>
+</div>
