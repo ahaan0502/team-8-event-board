@@ -1,5 +1,7 @@
 export type EventError =
-  | ReturnType<typeof ValidationError>;
+  | ReturnType<typeof ValidationError>
+  | ReturnType<typeof InvalidTimeRangeError>
+  | ReturnType<typeof InvalidCapacityError>;
 
 export function ValidationError(message: string) {
   return {
