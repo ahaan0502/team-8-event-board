@@ -18,14 +18,14 @@ export function UnauthorizedError(message: string) {
 
 export function InvalidTimeRangeError(message: string) {
   return {
-    type: "ValidationError",
+    type: "InvalidTimeRangeError",
     message,
   };
 }
 
 export function InvalidCapacityError(message: string) {
   return {
-    type: "ValidationError",
+    type: "InvalidCapacityError",
     message,
   };
 }
