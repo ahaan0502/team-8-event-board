@@ -4,16 +4,6 @@ import { createComposedApp } from "../../src/composition";
 const app = createComposedApp().getExpressApp();
 const agent = request.agent(app);
 
-const validEventData = {
-    title: "Test Event",
-    description: "Test Description",
-    location: "Test Location",
-    category: "Test Category",
-    startTime: new Date(Date.now() + 10000).toISOString(),
-    endTime: new Date(Date.now() + 20000).toISOString(),
-    capacity: 10,
-};
-
     beforeEach(async () => {
   const res = await agent
     .post("/login")
@@ -45,4 +35,41 @@ describe("eventService", () => {
 
   expect(res.status).toBe(302);
 });
+
+it("returns 400 when title is missing", async () => {
+  const res = await agent
+    .post("/events")
+    .send(
+      new URLSearchParams({
+        title: "",
+        description: "Test Description",
+        location: "Test Location",
+        category: "Test Category",
+        startTime: new Date(Date.now() + 10000).toISOString(),
+        endTime: new Date(Date.now() + 20000).toISOString(),
+        capacity: "10"
+      }).toString()
+    );
+
+  expect(res.status).toBe(400);
+});
+
+it("returns 400 when endTime is before startTime", async () => {
+  const res = await agent
+    .post("/events")
+    .send(
+      new URLSearchParams({
+        title: "Test Event",
+        description: "Test Description",
+        location: "Test Location",
+        category: "Test Category",
+        startTime: new Date(Date.now() + 10000).toISOString(),
+        endTime: new Date(Date.now() + 5000).toISOString(),
+        capacity: "10"
+      }).toString()
+    );
+
+  expect(res.status).toBe(400);
+});
+
 })
