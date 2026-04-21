@@ -1,7 +1,8 @@
 import { Ok, Err, type Result } from "../lib/result";
-import { ValidationError, type EventError, NotFoundError, InvalidTimeRangeError, InvalidCapacityError } from "./errors";
+import { ValidationError, type EventError, NotFoundError, InvalidTimeRangeError, InvalidCapacityError, NotAuthorizedError, InvalidStateError } from "./errors";
 import { Event } from "./event";
 import type { EventRepository } from "./eventRepository";
+import type { UserRole } from "../auth/User";
 
 export interface CreateEventInput {
   title: string;
@@ -17,10 +18,9 @@ export interface CreateEventInput {
 export interface IEventService {
   createEvent(input: CreateEventInput): Promise<Result<Event, EventError>>;
   updateEvent(eventId: string, input: Omit<CreateEventInput, "organizerId">, actingUserId: string): Promise<Result<Event, EventError>>;
-  getEventById(
-    eventId: string,
-    actingUserId?: string
-  ): Promise<Result<Event, EventError>>;
+  getEventById(eventId: string, actingUserId?: string): Promise<Result<Event, EventError>>;
+  publishEvent(eventId: string, userId: string, userRole: UserRole): Promise<Result<Event, EventError>>;
+  cancelEvent(eventId: string, userId: string, userRole: UserRole): Promise<Result<Event, EventError>>;
 }
 
 class EventService implements IEventService {
@@ -147,6 +147,40 @@ class EventService implements IEventService {
     const saved = await this.repo.update(updated)
   
     return Ok(saved)
+  }
+
+  private canModify(event: Event, userId: string, userRole: UserRole): boolean {
+    return userRole === "admin" || event.organizerId === userId;
+  }
+
+  async publishEvent(
+    eventId: string,
+    userId: string,
+    userRole: UserRole
+  ): Promise<Result<Event, EventError>> {
+    const event = await this.repo.getEventById(eventId);
+    if (!event) return Err(NotFoundError("Event not found."));
+    if (!this.canModify(event, userId, userRole))
+      return Err(NotAuthorizedError("Only the organizer or an admin can publish this event."));
+    if (event.status !== "draft")
+      return Err(InvalidStateError(`Cannot publish an event with status "${event.status}".`));
+    const updated = await this.repo.update({ ...event, status: "published", updatedAt: new Date() });
+    return Ok(updated);
+  }
+
+  async cancelEvent(
+    eventId: string,
+    userId: string,
+    userRole: UserRole
+  ): Promise<Result<Event, EventError>> {
+    const event = await this.repo.getEventById(eventId);
+    if (!event) return Err(NotFoundError("Event not found."));
+    if (!this.canModify(event, userId, userRole))
+      return Err(NotAuthorizedError("Only the organizer or an admin can cancel this event."));
+    if (event.status !== "published")
+      return Err(InvalidStateError(`Cannot cancel an event with status "${event.status}".`));
+    const updated = await this.repo.update({ ...event, status: "cancelled", updatedAt: new Date() });
+    return Ok(updated);
   }
 }
 
