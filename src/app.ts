@@ -396,6 +396,26 @@ this.app.post(
 );
 
 this.app.post(
+  "/events/:id/publish",
+  asyncHandler(async (req, res) => {
+    if (!this.requireAuthenticated(req, res)) return;
+    const eventId = typeof req.params.id === "string" ? req.params.id : "";
+    const htmx = req.get("HX-Request") === "true";
+    await this.eventController.publishEventFromForm(res, eventId, sessionStore(req), htmx);
+  })
+);
+
+this.app.post(
+  "/events/:id/cancel",
+  asyncHandler(async (req, res) => {
+    if (!this.requireAuthenticated(req, res)) return;
+    const eventId = typeof req.params.id === "string" ? req.params.id : "";
+    const htmx = req.get("HX-Request") === "true";
+    await this.eventController.cancelEventFromForm(res, eventId, sessionStore(req), htmx);
+  })
+);
+
+this.app.post(
   "/events/:id/rsvp",
   asyncHandler(async (req, res) => {
     if (!this.requireAuthenticated(req, res)) {
