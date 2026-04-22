@@ -1,8 +1,22 @@
 import { Ok, Err, type Result } from "../lib/result";
-import { ValidationError, type EventError, NotFoundError, InvalidTimeRangeError, InvalidCapacityError, NotAuthorizedError, InvalidStateError } from "./errors";
+import {
+  ValidationError,
+  NotFoundError,
+  InvalidTimeRangeError,
+  InvalidCapacityError,
+  NotAuthorizedError,
+  InvalidStateError,
+  InvalidFilterError,
+  type EventError,
+} from "./errors";
 import { Event } from "./event";
 import type { EventRepository } from "./eventRepository";
 import type { UserRole } from "../auth/User";
+
+export interface EventQuery {
+  category?: string;
+  date?: string;
+}
 
 export interface CreateEventInput {
   title: string;
@@ -15,7 +29,15 @@ export interface CreateEventInput {
   organizerId: string;
 }
 
+function toLocalDateString(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 export interface IEventService {
+  listEvents(filters: EventQuery): Promise<Result<Event[], EventError>>;
   createEvent(input: CreateEventInput): Promise<Result<Event, EventError>>;
   updateEvent(eventId: string, input: Omit<CreateEventInput, "organizerId">, actingUserId: string): Promise<Result<Event, EventError>>;
   getEventById(eventId: string, actingUserId?: string): Promise<Result<Event, EventError>>;
@@ -25,6 +47,35 @@ export interface IEventService {
 
 class EventService implements IEventService {
   constructor(private readonly repo: EventRepository) {}
+
+  async listEvents(filters: EventQuery): Promise<Result<Event[], EventError>> {
+    const events = await this.repo.getAll();
+    const now = new Date();
+
+    let filtered = events.filter(
+      (event) => event.status === "published" && event.startDatetime >= now
+    );
+
+    if (filters.category && filters.category.trim() !== "") {
+      const category = filters.category.trim().toLowerCase();
+      filtered = filtered.filter(
+        (event) => event.category.toLowerCase() === category
+      );
+    }
+
+    if (filters.date && filters.date.trim() !== "") {
+      const requestedDate = filters.date.trim();
+      if (Number.isNaN(new Date(requestedDate).getTime())) {
+        return Err(InvalidFilterError("Invalid date format."));
+      }
+      filtered = filtered.filter(
+        (event) => toLocalDateString(event.startDatetime) === requestedDate
+      );
+    }
+
+    filtered.sort((a, b) => a.startDatetime.getTime() - b.startDatetime.getTime());
+    return Ok(filtered);
+  }
 
   async createEvent(
     input: CreateEventInput
