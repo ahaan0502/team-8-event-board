@@ -46,26 +46,48 @@ describe("Event Edit Endpoint", () => {
     return eventId;
   }
 
-  it("returns 200 and HTML fragment for valid edit (HTMX)", async () => {
-  const eventId = await createEvent();
+    it("returns 200 and HTML fragment for valid edit (HTMX)", async () => {
+        const eventId = await createEvent();
 
-  const res = await request(app)
-    .post(`/events/${eventId}`)
-    .set("Cookie", authCookie)
-    .set("HX-Request", "true")
-    .type("form")
-    .send({
-      title: "Updated Title",
-      description: "Updated description",
-      location: "ILC",
-      category: "Workshop",
-      startTime: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
-      endTime: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
-      capacity: "5",
+        const res = await request(app)
+        .post(`/events/${eventId}`)
+        .set("Cookie", authCookie)
+        .set("HX-Request", "true")
+        .type("form")
+        .send({
+            title: "Updated Title",
+            description: "Updated description",
+            location: "ILC",
+            category: "Workshop",
+            startTime: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+            endTime: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
+            capacity: "5",
+        });
+
+        expect(res.status).toBe(200);
+        expect(res.text).toContain('id="edit-form"');
+        expect(res.text).toContain("Updated Title");
     });
 
-  expect(res.status).toBe(200);
-  expect(res.text).toContain('id="edit-form"');
-  expect(res.text).toContain("Updated Title");
-});
+    it("returns 400 and shows error for invalid input", async () => {
+        const eventId = await createEvent();
+
+        const res = await request(app)
+        .post(`/events/${eventId}`)
+        .set("Cookie", authCookie)
+        .set("HX-Request", "true")
+        .type("form")
+        .send({
+            title: "",
+            description: "desc",
+            location: "ILC",
+            category: "Workshop",
+            startTime: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+            endTime: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
+            capacity: "5",
+        });
+
+        expect(res.status).toBe(400);
+        expect(res.text).toContain("Title is required");
+    });
 });
