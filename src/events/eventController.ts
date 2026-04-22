@@ -167,47 +167,69 @@ class EventController implements IEventController {
   eventId: string,
   input: Omit<CreateEventInput, "organizerId">,
   store: AppSessionStore
-  ): Promise<void> {
+): Promise<void> {
     const session = touchAppSession(store);
     const user = getAuthenticatedUser(store);
-
     if (!user) {
       this.logger.warn("Unauthorized event update attempt");
-      res.status(403);
+
+      const isHx = res.req?.get("HX-Request") === "true";
+
+      if (isHx) {
+        res.status(401).render("partials/error", {
+          message: "You must be logged in.",
+          layout: false,
+        });
+      return;
+      }
+
+      res.status(401);
       await this.showEditEvent(res, eventId, store, "You must be logged in.");
       return;
     }
+  if (
+    !input ||
+    typeof input !== "object" ||
+    !("title" in input) ||
+    !("description" in input) ||
+    !("startTime" in input) ||
+    !("endTime" in input)
+  ) {
+    res.status(404).send("Event not found");
+    return;
+  }
+  const result = await this.service.updateEvent(
+    eventId,
+    input,
+    user.userId
+  );
 
-    const result = await this.service.updateEvent(
-      eventId,
-      input,
-      user.userId
-    );
+  if (result.ok === false) {
+    const error = result.value;
+    if (error.type === "NotFoundError") {
+      res.status(404).send("Event not found");
+      return;
+    }
 
-    if (result.ok === false) {
-      const error = result.value;
-      const status = this.mapErrorStatus(error);
+    const status = this.mapErrorStatus(error);
+    const isHx = res.req?.get("HX-Request") === "true";
 
-      const log = status >= 500 ? this.logger.error : this.logger.warn;
-      log.call(this.logger, `Event update failed: ${error.message}`);
+    const log = status >= 500 ? this.logger.error : this.logger.warn;
+    log.call(this.logger, `Event update failed: ${error.message}`);
 
-      res.status(status);
+    res.status(status);
 
-      const isHx = res.req?.get("HX-Request");
-
-      if (isHx) {
-        const session = touchAppSession(store);
-
-        res.render("events/edit", {
-          event: {
-            id: eventId,
-            title: input.title,
-            description: input.description,
-            location: input.location,
-            category: input.category,
-            capacity: input.capacity,
-            startDatetime: input.startTime,
-            endDatetime: input.endTime,
+    if (isHx) {
+      res.render("events/edit", {
+        event: {
+          id: eventId,
+          title: input?.title ?? "",
+          description: input?.description ?? "",
+          location: input?.location ?? "",
+          category: input?.category ?? "",
+          capacity: input?.capacity ?? 0,
+          startDatetime: input?.startTime ?? new Date(),
+          endDatetime: input?.endTime ?? new Date(),
           },
           session,
           pageError: error.message,
@@ -215,17 +237,16 @@ class EventController implements IEventController {
         });
         return;
       }
+
       await this.showEditEvent(res, eventId, store, error.message);
       return;
     }
 
     this.logger.info(`Updated event ${eventId}`);
 
-    const isHx = res.req?.get("HX-Request");
+    const isHx = res.req?.get("HX-Request") === "true";
 
     if (isHx) {
-      const session = touchAppSession(store);
-
       res.render("events/edit", {
         event: result.value,
         session,
@@ -234,6 +255,7 @@ class EventController implements IEventController {
       });
       return;
     }
+
     res.redirect(`/events/${eventId}`);
   }
 

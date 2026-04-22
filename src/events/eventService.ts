@@ -111,22 +111,37 @@ class EventService implements IEventService {
     if (event.status === "cancelled" || event.status === "past") {
       return Err(ValidationError("Cannot edit this event."))
     }
-  
+
+    if (
+        !input ||
+        typeof input !== "object" ||
+        typeof input?.title !== "string" ||
+        typeof input?.description !== "string" ||
+        !(input?.startTime instanceof Date) ||
+        Number.isNaN(input?.startTime?.getTime?.()) ||
+        !(input?.endTime instanceof Date) ||
+        Number.isNaN(input?.endTime?.getTime?.()) ||
+        typeof input?.capacity !== "number" ||
+        Number.isNaN(input?.capacity)
+    ) {
+        return Err(NotFoundError("Event not found."));
+      }
+
     const title = input.title.trim()
     const description = input.description.trim()
-  
+
     if (!title) {
       return Err(ValidationError("Title is required."))
     }
-  
+
     if (!description) {
       return Err(ValidationError("Description is required."))
     }
-  
+
     if (input.endTime <= input.startTime) {
       return Err(ValidationError("End time must be after start time."))
     }
-  
+
     if (input.capacity <= 0) {
       return Err(ValidationError("Capacity must be greater than 0."))
     }

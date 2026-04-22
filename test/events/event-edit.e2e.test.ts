@@ -110,4 +110,24 @@ describe("Event Edit Endpoint", () => {
 
         expect(res.status).toBe(401);
     });
+
+    it("returns 404 for non-existent event", async () => {
+  const res = await request(app)
+    .post("/events/not-a-real-id")
+    .set("Cookie", authCookie)
+    .set("HX-Request", "true")
+    .type("form")
+    .send({
+      title: "Test",
+      description: "desc",
+      location: "ILC",
+      category: "Workshop",
+      startTime: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+      endTime: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
+      capacity: "5",
+    });
+
+  expect(res.status).toBe(404);
+  expect(res.text).toContain("Event not found");
+});
 });
