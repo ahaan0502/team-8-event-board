@@ -6,6 +6,7 @@ import {
   InvalidCapacityError,
   NotAuthorizedError,
   InvalidStateError,
+  InvalidFilterError,
   type EventError,
 } from "./errors";
 import { Event } from "./event";
@@ -68,7 +69,7 @@ class EventService implements IEventService {
       const parsed = new Date(requestedDate);
 
       if (Number.isNaN(parsed.getTime())) {
-        return Err(ValidationError("Invalid date format."));
+        return Err(InvalidFilterError("Invalid date format."));
       }
 
       filtered = filtered.filter((event) => {

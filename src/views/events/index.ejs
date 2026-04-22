@@ -1,87 +1,64 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Browse Events</title>
-  </head>
-  <body>
-    <h1>Browse Events</h1>
+<div class="space-y-6">
+  <h1 class="text-2xl font-bold text-slate-900">Browse Events</h1>
 
-    <% if (pageError) { %>
-      <p><%= pageError %></p>
-    <% } %>
+  <form
+    method="GET"
+    action="/events"
+    hx-get="/events"
+    hx-target="#event-list"
+    hx-push-url="true"
+    hx-trigger="change, submit"
+    class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm flex flex-wrap gap-4 items-end"
+  >
+    <div class="flex flex-col gap-1">
+      <label for="q" class="text-sm font-medium text-slate-700">Search</label>
+      <input
+        type="text"
+        id="q"
+        name="q"
+        value="<%= filters?.q ?? '' %>"
+        placeholder="Title, description, location…"
+        class="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+      />
+    </div>
 
-    <form method="GET" action="/events">
-      <div>
-        <label for="q">Search</label>
-        <input
-          type="text"
-          id="q"
-          name="q"
-          value="<%= filters?.q ?? '' %>"
-        />
-      </div>
+    <div class="flex flex-col gap-1">
+      <label for="category" class="text-sm font-medium text-slate-700">Category</label>
+      <select
+        id="category"
+        name="category"
+        class="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+      >
+        <option value="">All categories</option>
+        <option value="Music"         <%= filters?.category === "Music"         ? "selected" : "" %>>Music</option>
+        <option value="Tech"          <%= filters?.category === "Tech"          ? "selected" : "" %>>Tech</option>
+        <option value="Career"        <%= filters?.category === "Career"        ? "selected" : "" %>>Career</option>
+        <option value="Social"        <%= filters?.category === "Social"        ? "selected" : "" %>>Social</option>
+        <option value="Entertainment" <%= filters?.category === "Entertainment" ? "selected" : "" %>>Entertainment</option>
+        <option value="Planning"      <%= filters?.category === "Planning"      ? "selected" : "" %>>Planning</option>
+      </select>
+    </div>
 
-      <div>
-        <label for="category">Category</label>
-        <select id="category" name="category">
-          <option value="">All</option>
+    <div class="flex flex-col gap-1">
+      <label for="date" class="text-sm font-medium text-slate-700">Date</label>
+      <input
+        type="date"
+        id="date"
+        name="date"
+        value="<%= filters?.date ?? '' %>"
+        class="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+      />
+    </div>
 
-          <option value="Music" <%= filters?.category === "Music" ? "selected" : "" %>>
-            Music
-          </option>
+    <button
+      type="submit"
+      class="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700"
+    >
+      Apply
+    </button>
+  </form>
 
-          <option value="Tech" <%= filters?.category === "Tech" ? "selected" : "" %>>
-            Tech
-          </option>
-
-          <option value="Career" <%= filters?.category === "Career" ? "selected" : "" %>>
-            Career
-          </option>
-
-          <option value="Planning" <%= filters?.category === "Planning" ? "selected" : "" %>>
-            Planning
-          </option>
-        </select>
-      </div>
-
-      <div>
-        <label for="date">Date</label>
-        <input
-          type="date"
-          id="date"
-          name="date"
-          value="<%= filters?.date ?? '' %>"
-        />
-      </div>
-
-      <button type="submit">Apply</button>
-    </form>
-
-    <hr />
-
-    <% if (events.length === 0) { %>
-      <p>No matching events found.</p>
-    <% } else { %>
-      <ul>
-        <% events.forEach((event) => { %>
-          <li>
-            <h2><%= event.title %></h2>
-            <p><%= event.description %></p>
-            <p><strong>Location:</strong> <%= event.location %></p>
-            <p><strong>Category:</strong> <%= event.category %></p>
-            <p>
-              <strong>Starts:</strong>
-              <%= event.startDatetime.toLocaleString() %>
-            </p>
-            <p>
-              <strong>Ends:</strong>
-              <%= event.endDatetime.toLocaleString() %>
-            </p>
-          </li>
-        <% }) %>
-      </ul>
-    <% } %>
-  </body>
-</html>
+  <div id="event-list">
+    <%- include('./partials/eventList', { events, filters, pageError }) %>
+  </div>
+</div>
