@@ -1,0 +1,23 @@
+<% if (pageError) { %>
+  <p class="text-red-600 text-sm font-medium"><%= pageError %></p>
+<% } %>
+
+<% if (events.length === 0) { %>
+  <p class="text-slate-500 text-sm">No upcoming events match your filters.</p>
+<% } else { %>
+  <ul class="space-y-4">
+    <% events.forEach((event) => { %>
+      <li class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
+        <a href="/events/<%= event.id %>" class="no-underline">
+          <h2 class="text-lg font-semibold text-slate-900 hover:text-blue-600"><%= event.title %></h2>
+        </a>
+        <p class="text-slate-600 text-sm mt-1"><%= event.description %></p>
+        <div class="mt-3 flex flex-wrap gap-4 text-sm text-slate-500">
+          <span><strong>Location:</strong> <%= event.location %></span>
+          <span><strong>Category:</strong> <%= event.category %></span>
+          <span><strong>Starts:</strong> <%= new Date(event.startDatetime).toLocaleString() %></span>
+        </div>
+      </li>
+    <% }) %>
+  </ul>
+<% } %>
