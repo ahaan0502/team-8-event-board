@@ -183,6 +183,23 @@ class EventController implements IEventController {
       log.call(this.logger, `Event update failed: ${error.message}`);
 
       res.status(status);
+
+      const isHx = res.req?.get("HX-Request");
+
+      if (isHx) {
+        const session = touchAppSession(store);
+
+        res.render("events/edit", {
+          event: {
+            id: eventId,
+            ...input,
+          },
+          session,
+          pageError: error.message,
+          layout: false,
+        });
+        return;
+      }
       await this.showEditEvent(res, eventId, store, error.message);
       return;
     }
