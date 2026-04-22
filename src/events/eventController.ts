@@ -38,21 +38,27 @@ class EventController implements IEventController {
 
     const result = await this.service.listEvents({ q, category, date });
 
+    const isHtmx = req.get("HX-Request") === "true";
+    const view = isHtmx ? "events/partials/eventList" : "events/index";
+    const layoutOpts = isHtmx ? { layout: false } : {};
+
     if (result.ok === false) {
-      res.status(400).render("events/index", {
+      res.status(400).render(view, {
         events: [],
         filters: { q, category, date },
         pageError: result.value.message,
         session,
+        ...layoutOpts,
       });
       return;
     }
 
-    res.render("events/index", {
+    res.render(view, {
       events: result.value,
       filters: { q, category, date },
       pageError: null,
       session,
+      ...layoutOpts,
     });
   }
 
