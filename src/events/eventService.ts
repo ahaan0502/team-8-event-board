@@ -1,8 +1,23 @@
 import { Ok, Err, type Result } from "../lib/result";
-import { ValidationError, type EventError, NotFoundError, InvalidTimeRangeError, InvalidCapacityError, NotAuthorizedError, InvalidStateError } from "./errors";
+import {
+  ValidationError,
+  NotFoundError,
+  InvalidTimeRangeError,
+  InvalidCapacityError,
+  NotAuthorizedError,
+  InvalidStateError,
+  InvalidFilterError,
+  type EventError,
+} from "./errors";
 import { Event } from "./event";
 import type { EventRepository } from "./eventRepository";
 import type { UserRole } from "../auth/User";
+
+export interface EventQuery {
+  q?: string;
+  category?: string;
+  date?: string;
+}
 
 export interface CreateEventInput {
   title: string;
@@ -15,7 +30,15 @@ export interface CreateEventInput {
   organizerId: string;
 }
 
+function toLocalDateString(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 export interface IEventService {
+  listEvents(filters: EventQuery): Promise<Result<Event[], EventError>>;
   createEvent(input: CreateEventInput): Promise<Result<Event, EventError>>;
   updateEvent(eventId: string, input: Omit<CreateEventInput, "organizerId">, actingUserId: string): Promise<Result<Event, EventError>>;
   getEventById(eventId: string, actingUserId?: string): Promise<Result<Event, EventError>>;
@@ -26,13 +49,55 @@ export interface IEventService {
 class EventService implements IEventService {
   constructor(private readonly repo: EventRepository) {}
 
-  async createEvent(
-    input: CreateEventInput
-  ): Promise<Result<Event, EventError>> {
+  async listEvents(filters: EventQuery): Promise<Result<Event[], EventError>> {
+    const events = await this.repo.getAll();
+    const now = new Date();
+
+    let filtered = events.filter((event) => {
+      return event.status === "published" && event.startDatetime >= now;
+    });
+
+    if (filters.category && filters.category.trim() !== "") {
+      const category = filters.category.trim().toLowerCase();
+      filtered = filtered.filter((event) => {
+        return event.category.toLowerCase() === category;
+      });
+    }
+
+    if (filters.date && filters.date.trim() !== "") {
+      const requestedDate = filters.date.trim();
+      const parsed = new Date(requestedDate);
+
+      if (Number.isNaN(parsed.getTime())) {
+        return Err(InvalidFilterError("Invalid date format."));
+      }
+
+      filtered = filtered.filter((event) => {
+        return toLocalDateString(event.startDatetime) === requestedDate;
+      });
+    }
+
+    if (filters.q && filters.q.trim() !== "") {
+      const q = filters.q.trim().toLowerCase();
+      filtered = filtered.filter((event) => {
+        return (
+          event.title.toLowerCase().includes(q) ||
+          event.description.toLowerCase().includes(q) ||
+          event.location.toLowerCase().includes(q) ||
+          event.category.toLowerCase().includes(q)
+        );
+      });
+    }
+
+    filtered.sort((a, b) => a.startDatetime.getTime() - b.startDatetime.getTime());
+
+    return Ok(filtered);
+  }
+
+  async createEvent(input: CreateEventInput): Promise<Result<Event, EventError>> {
     const title = input.title.trim();
     const description = input.description.trim();
 
-    // Validation
     if (!title) {
       return Err(ValidationError("Title is required."));
     }
@@ -42,18 +107,13 @@ class EventService implements IEventService {
     }
 
     if (input.endTime <= input.startTime) {
-      return Err(
-        InvalidTimeRangeError("End time must be after start time.")
-      );
+      return Err(InvalidTimeRangeError("End time must be after start time."));
     }
 
     if (input.capacity <= 0) {
-      return Err(
-        InvalidCapacityError("Capacity must be greater than 0.")
-      );
+      return Err(InvalidCapacityError("Capacity must be greater than 0."));
     }
 
-    // Create event
     const event: Event = {
       id: crypto.randomUUID(),
       title,
@@ -67,30 +127,22 @@ class EventService implements IEventService {
       organizerId: input.organizerId,
       createdAt: new Date(),
       updatedAt: new Date(),
-    }
+    };
 
     const created = await this.repo.create(event);
-
     return Ok(created);
   }
 
   async getEventById(
     eventId: string,
-    actingUserId?: string
+    _actingUserId?: string
   ): Promise<Result<Event, EventError>> {
-
     const event = await this.repo.getEventById(eventId);
 
     if (!event) {
       return Err(NotFoundError("Event not found."));
     }
 
-    // Draft visibility rule
-    /*
-    if (event.status === "draft" && event.organizerId !== actingUserId) {
-      return Err(NotFoundError("Event not found."));
-    }
-    */
     return Ok(event);
   }
 
@@ -99,39 +151,39 @@ class EventService implements IEventService {
     input: Omit<CreateEventInput, "organizerId">,
     actingUserId: string
   ): Promise<Result<Event, EventError>> {
-    const event = await this.repo.getEventById(eventId)
-  
+    const event = await this.repo.getEventById(eventId);
+
     if (!event) {
-      return Err(NotFoundError("Event not found."))
+      return Err(NotFoundError("Event not found."));
     }
-  
+
     if (event.organizerId !== actingUserId) {
-      return Err(ValidationError("Not authorized to edit this event."))
+      return Err(ValidationError("Not authorized to edit this event."));
     }
-  
+
     if (event.status === "cancelled" || event.status === "past") {
-      return Err(ValidationError("Cannot edit this event."))
+      return Err(ValidationError("Cannot edit this event."));
     }
-  
-    const title = input.title.trim()
-    const description = input.description.trim()
-  
+
+    const title = input.title.trim();
+    const description = input.description.trim();
+
     if (!title) {
-      return Err(ValidationError("Title is required."))
+      return Err(ValidationError("Title is required."));
     }
-  
+
     if (!description) {
-      return Err(ValidationError("Description is required."))
+      return Err(ValidationError("Description is required."));
     }
-  
+
     if (input.endTime <= input.startTime) {
-      return Err(ValidationError("End time must be after start time."))
+      return Err(ValidationError("End time must be after start time."));
     }
-  
+
     if (input.capacity <= 0) {
-      return Err(ValidationError("Capacity must be greater than 0."))
+      return Err(ValidationError("Capacity must be greater than 0."));
     }
-  
+
     const updated: Event = {
       ...event,
       title,
@@ -142,11 +194,10 @@ class EventService implements IEventService {
       startDatetime: input.startTime,
       endDatetime: input.endTime,
       updatedAt: new Date(),
-    }
-  
-    const saved = await this.repo.update(updated)
-  
-    return Ok(saved)
+    };
+
+    const saved = await this.repo.update(updated);
+    return Ok(saved);
   }
 
   private canModify(event: Event, userId: string, userRole: UserRole): boolean {
@@ -184,8 +235,6 @@ class EventService implements IEventService {
   }
 }
 
-export function CreateEventService(
-  repo: EventRepository
-): IEventService {
+export function CreateEventService(repo: EventRepository): IEventService {
   return new EventService(repo);
 }

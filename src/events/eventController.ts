@@ -1,4 +1,4 @@
-import type { Response } from "express";
+import type { Request, Response } from "express";
 import type { IEventService, CreateEventInput } from "./eventService";
 import {
   touchAppSession,
@@ -11,10 +11,11 @@ import type { EventError } from "./errors";
 import { IRSVPService } from "./rsvpService";
 
 export interface IEventController {
+  listEvents(req: Request, res: Response): Promise<void>;
   showCreateEvent(res: Response, session: IAppBrowserSession, pageError?: string | null): Promise<void>;
   createEventFromForm(res: Response, input: Omit<CreateEventInput, "organizerId">, store: AppSessionStore): Promise<void>;
   getEventDetail(res: Response, eventId: string, store: AppSessionStore): Promise<void>;
-  showEditEvent(res: Response, eventId: string, session: AppSessionStore, pageError?: string | null): Promise<void>;
+  showEditEvent(res: Response, eventId: string, store: AppSessionStore, pageError?: string | null): Promise<void>;
   updateEventFromForm(res: Response, eventId: string, input: Omit<CreateEventInput, "organizerId">, store: AppSessionStore): Promise<void>;
   toggleRSVP(res: Response, eventId: string, store: AppSessionStore): Promise<void>;
   publishEventFromForm(res: Response, eventId: string, store: AppSessionStore, htmx?: boolean): Promise<void>;
@@ -48,6 +49,37 @@ class EventController implements IEventController {
       default:
         return 500;
     }
+  async listEvents(req: Request, res: Response): Promise<void> {
+    const q = typeof req.query.q === "string" ? req.query.q : undefined;
+    const category = typeof req.query.category === "string" ? req.query.category : undefined;
+    const date = typeof req.query.date === "string" ? req.query.date : undefined;
+
+    const session = touchAppSession(req.session as any);
+
+    const result = await this.service.listEvents({ q, category, date });
+
+    const isHtmx = req.get("HX-Request") === "true";
+    const view = isHtmx ? "events/partials/eventList" : "events/index";
+    const layoutOpts = isHtmx ? { layout: false } : {};
+
+    if (result.ok === false) {
+      res.status(400).render(view, {
+        events: [],
+        filters: { q, category, date },
+        pageError: result.value.message,
+        session,
+        ...layoutOpts,
+      });
+      return;
+    }
+
+    res.render(view, {
+      events: result.value,
+      filters: { q, category, date },
+      pageError: null,
+      session,
+      ...layoutOpts,
+    });
   }
 
   async showCreateEvent(
@@ -55,7 +87,7 @@ class EventController implements IEventController {
     session: IAppBrowserSession,
     pageError: string | null = null
   ): Promise<void> {
-    res.render("events/create", { pageError, session });
+    res.render("events/create", { session, pageError });
   }
 
   async createEventFromForm(
@@ -67,101 +99,71 @@ class EventController implements IEventController {
     const user = getAuthenticatedUser(store);
 
     if (!user) {
-      this.logger.warn("Unauthorized event creation attempt");
-      res.status(403);
-      await this.showCreateEvent(res, session, "You must be logged in.");
+      res.status(403).render("partials/error", { message: "You must be logged in.", layout: false });
       return;
     }
 
-    const result = await this.service.createEvent({
-      ...input,
-      organizerId: user.userId,
-    });
+    const result = await this.service.createEvent({ ...input, organizerId: user.userId });
 
     if (result.ok === false) {
-      const error = result.value;
-      const status = this.mapErrorStatus(error);
-
-      const log = status >= 500 ? this.logger.error : this.logger.warn;
-      log.call(this.logger, `Event creation failed: ${error.message}`);
-
-      res.status(status);
-      await this.showCreateEvent(res, session, error.message);
+      res.status(400);
+      await this.showCreateEvent(res, session, result.value.message);
       return;
     }
 
-    this.logger.info(`Created event ${result.value.id}`);
     res.redirect(`/events/${result.value.id}`);
   }
 
   async getEventDetail(
-  res: Response,
-  eventId: string,
-  store: AppSessionStore
-): Promise<void> {
-  const session = touchAppSession(store);
-  const user = getAuthenticatedUser(store);
-
-  const result = await this.service.getEventById(
-    eventId,
-    user?.userId
-  );
-
-  if (result.ok === false) {
-    const error = result.value;
-
-    const status =
-      error.type === "NotFoundError" ? 404 : 500;
-
-    const log = status >= 500 ? this.logger.error : this.logger.warn;
-    log.call(this.logger, `Event detail failed: ${error.message}`);
-
-    res.status(status).render("partials/error", {
-      message: error.message,
-      layout: false,
-    });
-    return;
-  }
-
-  res.render("events/detail", {
-    event: result.value,
-    session,
-    pageError: null,
-  });
-}
-  async showEditEvent(
-  res: Response,
-  eventId: string,
-  store: AppSessionStore,
-  pageError: string | null = null
-): Promise<void> {
-  const session = touchAppSession(store);
-  const user = getAuthenticatedUser(store);
-
-  const result = await this.service.getEventById(
-    eventId,
-    user?.userId
-  );
-
-  if (result.ok === false) {
-    res.status(404).send("Event not found");
-    return;
-  }
-
-  res.render("events/edit", {
-    event: result.value,
-    session,
-    pageError,
-  });
-}
-
-  async updateEventFromForm(
-  res: Response,
-  eventId: string,
-  input: Omit<CreateEventInput, "organizerId">,
-  store: AppSessionStore
+    res: Response,
+    eventId: string,
+    store: AppSessionStore
   ): Promise<void> {
     const session = touchAppSession(store);
+    const user = getAuthenticatedUser(store);
+    const result = await this.service.getEventById(eventId, user?.userId);
+
+    if (result.ok === false) {
+      res.status(404).send("Event not found");
+      return;
+    }
+
+    res.render("events/detail", {
+      event: result.value,
+      session,
+      pageError: null,
+    });
+  }
+
+  async showEditEvent(
+    res: Response,
+    eventId: string,
+    store: AppSessionStore,
+    pageError: string | null = null
+  ): Promise<void> {
+    const session = touchAppSession(store);
+    const user = getAuthenticatedUser(store);
+
+    const result = await this.service.getEventById(eventId, user?.userId);
+
+    if (result.ok === false) {
+      res.status(404).send("Event not found");
+      return;
+    }
+
+    res.render("events/edit", {
+      event: result.value,
+      session,
+      pageError,
+    });
+  }
+
+  async updateEventFromForm(
+    res: Response,
+    eventId: string,
+    input: Omit<CreateEventInput, "organizerId">,
+    store: AppSessionStore
+  ): Promise<void> {
     const user = getAuthenticatedUser(store);
 
     if (!user) {
@@ -171,19 +173,13 @@ class EventController implements IEventController {
       return;
     }
 
-    const result = await this.service.updateEvent(
-      eventId,
-      input,
-      user.userId
-    );
+    const result = await this.service.updateEvent(eventId, input, user.userId);
 
     if (result.ok === false) {
       const error = result.value;
       const status = this.mapErrorStatus(error);
-
       const log = status >= 500 ? this.logger.error : this.logger.warn;
       log.call(this.logger, `Event update failed: ${error.message}`);
-
       res.status(status);
       await this.showEditEvent(res, eventId, store, error.message);
       return;
@@ -207,7 +203,7 @@ class EventController implements IEventController {
     const result = await this.rsvpService.toggleRSVP(eventId, user.userId);
 
     if (result.ok === false) {
-      res.status(400).send(result.value.message);
+      res.status(404).send(result.value.message);
       return;
     }
 
@@ -284,6 +280,15 @@ class EventController implements IEventController {
       return;
     }
     res.redirect(`/events/${eventId}`);
+  }
+
+  private mapErrorStatus(error: EventError): number {
+    switch (error.type) {
+      case "NotFoundError": return 404;
+      case "NotAuthorizedError": return 403;
+      case "UnauthorizedError": return 401;
+      default: return 400;
+    }
   }
 }
 

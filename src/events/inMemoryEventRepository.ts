@@ -51,6 +51,10 @@ const events = new Map<string, Event>(
 )
 
 export class InMemoryEventRepository implements EventRepository {
+  async getAll(): Promise<Event[]> {
+    return Array.from(events.values());
+  }
+
   async create(event: Event): Promise<Event> {
     events.set(event.id, event)
     return event
@@ -69,7 +73,7 @@ export class InMemoryEventRepository implements EventRepository {
     const idSet = new Set(eventIds);
     return Array.from(events.values()).filter(event => idSet.has(event.id));
   }
-  
+
   async getEventsByOrganizerId(organizerId: string): Promise<Event[]> {
     return Array.from(events.values()).filter(
       event => event.organizerId === organizerId

@@ -6,7 +6,6 @@ import { CreatePasswordHasher } from "./auth/PasswordHasher";
 import { CreateApp } from "./app";
 import { CreateAttendeeService } from "./rsvp/attendeeService";
 import { CreateAttendeeController } from "./rsvp/attendeeController";
-import type { IAttendeeController } from "./rsvp/attendeeController";
 import type { IApp } from "./contracts";
 import { InMemoryEventRepository } from "./events/inMemoryEventRepository";
 import { CreateEventController } from "./events/eventController";
@@ -24,7 +23,6 @@ import { CreateRSVPService } from "./events/rsvpService";
 export function createComposedApp(logger?: ILoggingService): IApp {
   const resolvedLogger = logger ?? CreateLoggingService();
 
-  // Authentication & authorization wiring
   const authUsers = CreateInMemoryUserRepository();
   const passwordHasher = CreatePasswordHasher();
   const authService = CreateAuthService(authUsers, passwordHasher);
@@ -39,15 +37,15 @@ export function createComposedApp(logger?: ILoggingService): IApp {
   const eventRepo = new InMemoryEventRepository();
   const eventService = CreateEventService(eventRepo);
 
-  // RSVP wiring (NEW)
+  // RSVP wiring
   const rsvpRepo = CreateRSVPRepository();
   const rsvpService = CreateRSVPService(rsvpRepo, eventRepo);
 
   const eventController = CreateEventController(
-  eventService,
-  rsvpService,
-  resolvedLogger
-);
+    eventService,
+    rsvpService,
+    resolvedLogger
+  );
 
   // Attendee list wiring
   const attendeeService = CreateAttendeeService(rsvpRepo, authUsers, eventService);
@@ -56,9 +54,9 @@ export function createComposedApp(logger?: ILoggingService): IApp {
   // RSVP dashboard wiring
   const dashboardRsvpRepo = new InMemoryRSVPRepository();
   const rsvpDashboardService = CreateRSVPDashboardService(
-  dashboardRsvpRepo,
-  eventRepo
-);
+    dashboardRsvpRepo,
+    eventRepo
+  );
   const rsvpDashboardController = new RSVPDashboardController(
     rsvpDashboardService
   );
