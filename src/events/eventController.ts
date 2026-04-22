@@ -29,8 +29,25 @@ class EventController implements IEventController {
   ) {}
 
   private mapErrorStatus(error: EventError): number {
-    if (error.type === "ValidationError") return 400;
-    return 500;
+    switch (error.type) {
+      case "ValidationError":
+      case "InvalidTimeRangeError":
+      case "InvalidCapacityError":
+      case "InvalidStateError":
+        return 400;
+
+      case "NotFoundError":
+        return 404;
+
+      case "NotAuthorizedError":
+        return 403;
+
+      case "UnauthorizedError":
+        return 401;
+
+      default:
+        return 500;
+    }
   }
 
   async showCreateEvent(
