@@ -1,23 +1,25 @@
 <h1><%= event.title %></h1>
 
-<p> Description:  <%= event.description %></p>
+<p><strong>Description:</strong> <%= event.description %></p>
+<p><strong>Location:</strong> <%= event.location %></p>
+<p><strong>Category:</strong> <%= event.category %></p>
+<p><strong>Start:</strong> <%= event.startDatetime ? new Date(event.startDatetime).toLocaleString() : "N/A" %></p>
+<p><strong>End:</strong> <%= event.endDatetime ? new Date(event.endDatetime).toLocaleString() : "N/A" %></p>
+<p><strong>Capacity:</strong> <%= event.capacity %></p>
+<p><strong>Organizer ID:</strong> <%= event.organizerId %></p>
 
-<p> Location:  <%= event.location %></p>
+<%- include('partials/organizer-controls', { event, session }) %>
 
-<p> Category:  <%= event.category %></p>
-
-<p>
-   Start: 
-  <%= event.startTime.toLocaleString() %>
-</p>
-
-<p>
-   End: 
-  <%= event.endTime.toLocaleString() %>
-</p>
-
-<p> Capacity:  <%= event.capacity %></p>
-
-<p> Status:  <%= event.status %></p>
-
-<p> Organizer ID:  <%= event.organizerId %></p>
+<% const user = session?.authenticatedUser ?? null; %>
+<% if (user && user.role === "user") { %>
+<div id="rsvp-section">
+  <button
+    hx-post="/events/<%= event.id %>/rsvp"
+    hx-target="#rsvp-section"
+    hx-swap="outerHTML"
+  >
+    Toggle RSVP
+  </button>
+  <p>Your RSVP: <%= event.rsvpStatus || "none" %></p>
+</div>
+<% } %>

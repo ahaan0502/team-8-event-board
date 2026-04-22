@@ -18,6 +18,9 @@ import {
 } from "./session/AppSession";
 import { ILoggingService } from "./service/LoggingService";
 import type { IEventController } from "./events/eventController";
+import type { RSVPDashboardController } from './rsvps/RSVPDashboardController'
+import { OrganizerDashboardController } from "./events/OrganizerDashboardController";
+import type { IAttendeeController } from "./rsvp/attendeeController";
 
 type AsyncRequestHandler = RequestHandler;
 
@@ -41,7 +44,10 @@ class ExpressApp implements IApp {
   constructor(
     private readonly authController: IAuthController,
     private readonly eventController: IEventController,
-    private readonly logger: ILoggingService
+    private readonly rsvpDashboardController: RSVPDashboardController,
+    private readonly organizerDashboardController: OrganizerDashboardController,
+    private readonly attendeeController: IAttendeeController,
+    private readonly logger: ILoggingService,
   ) {
     this.app = express();
     this.registerMiddleware();
@@ -239,7 +245,7 @@ class ExpressApp implements IApp {
       })
     );
 
-    // Event routes for Features 6 and 10
+    // Event routes
 
     this.app.get(
       "/events",
@@ -249,6 +255,161 @@ class ExpressApp implements IApp {
         }
 
         await this.eventController.listEvents(req, res);
+      })
+    );
+
+    this.app.get(
+      "/my-rsvps",
+      asyncHandler(async (req, res) => {
+        if (!this.requireAuthenticated(req, res)) {
+          return;
+        }
+
+        const user = getAuthenticatedUser(sessionStore(req));
+        if (!user) {
+          res.redirect("/login");
+          return;
+        }
+
+        const browserSession = recordPageView(sessionStore(req));
+
+        await this.rsvpDashboardController.getMyRsvpsPage(
+          req,
+          res,
+          user.userId,
+          browserSession
+        );
+      })
+    );
+
+    this.app.get(
+      "/organizer/events",
+      asyncHandler(async (req, res) => {
+        if (!this.requireAuthenticated(req, res)) {
+          return;
+        }
+
+        const user = getAuthenticatedUser(sessionStore(req));
+        if (!user) {
+          res.redirect("/login");
+          return;
+        }
+
+        const browserSession = recordPageView(sessionStore(req));
+
+        await this.organizerDashboardController.getOrganizerDashboardPage(
+          req,
+          res,
+          user.userId,
+          browserSession
+        );
+      })
+    );
+
+    this.app.get(
+      "/events/:id/edit",
+      asyncHandler(async (req, res) => {
+        if (!this.requireAuthenticated(req, res)) {
+          return;
+        }
+
+        const eventId = typeof req.params.id === "string" ? req.params.id : "";
+
+        await this.eventController.showEditEvent(
+          res,
+          eventId,
+          sessionStore(req)
+        );
+      })
+    );
+
+    this.app.get(
+      "/events/:id",
+      asyncHandler(async (req, res) => {
+        if (!this.requireAuthenticated(req, res)) {
+          return;
+        }
+
+        const eventId = typeof req.params.id === "string" ? req.params.id : "";
+
+        await this.eventController.getEventDetail(
+          res,
+          eventId,
+          sessionStore(req)
+        );
+      })
+    );
+
+    this.app.post(
+      "/events/:id",
+      asyncHandler(async (req, res) => {
+        if (!this.requireAuthenticated(req, res)) {
+          return;
+        }
+
+        const eventId = typeof req.params.id === "string" ? req.params.id : "";
+
+        await this.eventController.updateEventFromForm(
+          res,
+          eventId,
+          {
+            title: typeof req.body.title === "string" ? req.body.title : "",
+            description:
+              typeof req.body.description === "string" ? req.body.description : "",
+            location: typeof req.body.location === "string" ? req.body.location : "",
+            category: typeof req.body.category === "string" ? req.body.category : "",
+            startTime: new Date(req.body.startTime),
+            endTime: new Date(req.body.endTime),
+            capacity: Number(req.body.capacity),
+          },
+          sessionStore(req)
+        );
+      })
+    );
+
+    this.app.post(
+      "/events/:id/publish",
+      asyncHandler(async (req, res) => {
+        if (!this.requireAuthenticated(req, res)) return;
+        const eventId = typeof req.params.id === "string" ? req.params.id : "";
+        const htmx = req.get("HX-Request") === "true";
+        await this.eventController.publishEventFromForm(res, eventId, sessionStore(req), htmx);
+      })
+    );
+
+    this.app.post(
+      "/events/:id/cancel",
+      asyncHandler(async (req, res) => {
+        if (!this.requireAuthenticated(req, res)) return;
+        const eventId = typeof req.params.id === "string" ? req.params.id : "";
+        const htmx = req.get("HX-Request") === "true";
+        await this.eventController.cancelEventFromForm(res, eventId, sessionStore(req), htmx);
+      })
+    );
+
+    this.app.post(
+      "/events/:id/rsvp",
+      asyncHandler(async (req, res) => {
+        if (!this.requireAuthenticated(req, res)) {
+          return;
+        }
+
+        const eventId = typeof req.params.id === "string" ? req.params.id : "";
+
+        await this.eventController.toggleRSVP(
+          res,
+          eventId,
+          sessionStore(req)
+        );
+      })
+    );
+
+    this.app.get(
+      "/events/:id/attendees",
+      asyncHandler(async (req, res) => {
+        if (!this.requireAuthenticated(req, res)) return;
+        const eventId = typeof req.params.id === "string" ? req.params.id : "";
+        await this.attendeeController.showAttendeeList(res, eventId, sessionStore(req));
       })
     );
 
@@ -294,7 +455,17 @@ class ExpressApp implements IApp {
 export function CreateApp(
   authController: IAuthController,
   eventController: IEventController,
-  logger: ILoggingService
+  rsvpDashboardController: RSVPDashboardController,
+  organizerDashboardController: OrganizerDashboardController,
+  attendeeController: IAttendeeController,
+  logger: ILoggingService,
 ): IApp {
-  return new ExpressApp(authController, eventController, logger);
+  return new ExpressApp(
+    authController,
+    eventController,
+    rsvpDashboardController,
+    organizerDashboardController,
+    attendeeController,
+    logger
+  );
 }
