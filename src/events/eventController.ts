@@ -201,7 +201,13 @@ class EventController implements IEventController {
         res.render("events/edit", {
           event: {
             id: eventId,
-            ...input,
+            title: input.title,
+            description: input.description,
+            location: input.location,
+            category: input.category,
+            capacity: input.capacity,
+            startDatetime: input.startTime,
+            endDatetime: input.endTime,
           },
           session,
           pageError: error.message,
