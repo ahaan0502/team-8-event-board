@@ -29,6 +29,26 @@ class EventController implements IEventController {
     private readonly logger: ILoggingService
   ) {}
 
+  private mapErrorStatus(error: EventError): number {
+    switch (error.type) {
+      case "ValidationError":
+      case "InvalidTimeRangeError":
+      case "InvalidCapacityError":
+      case "InvalidStateError":
+        return 400;
+
+      case "NotFoundError":
+        return 404;
+
+      case "NotAuthorizedError":
+        return 403;
+
+      case "UnauthorizedError":
+        return 401;
+
+      default:
+        return 500;
+    }
   async listEvents(req: Request, res: Response): Promise<void> {
     const q = typeof req.query.q === "string" ? req.query.q : undefined;
     const category = typeof req.query.category === "string" ? req.query.category : undefined;
@@ -176,7 +196,7 @@ class EventController implements IEventController {
   ): Promise<void> {
     const user = getAuthenticatedUser(store);
     if (!user) {
-      res.status(403).send("Must be logged in");
+      res.status(401).send("Must be logged in");
       return;
     }
 
