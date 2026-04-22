@@ -30,6 +30,10 @@ export function InvalidFilterError(message: string) {
   return { type: "InvalidFilterError" as const, message };
 }
 
+export function InvalidSearchError(message: string) {
+  return { type: "InvalidSearchError" as const, message };
+}
+
 export type EventError =
   | ReturnType<typeof ValidationError>
   | ReturnType<typeof NotFoundError>
@@ -38,4 +42,5 @@ export type EventError =
   | ReturnType<typeof InvalidTimeRangeError>
   | ReturnType<typeof InvalidCapacityError>
   | ReturnType<typeof InvalidStateError>
-  | ReturnType<typeof InvalidFilterError>;
+  | ReturnType<typeof InvalidFilterError>
+  | ReturnType<typeof InvalidSearchError>;
