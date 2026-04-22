@@ -188,6 +188,20 @@ class EventController implements IEventController {
     }
 
     this.logger.info(`Updated event ${eventId}`);
+
+    const isHx = res.req?.get("HX-Request");
+
+    if (isHx) {
+      const session = touchAppSession(store);
+
+      res.render("events/edit", {
+        event: result.value,
+        session,
+        pageError: null,
+        layout: false,
+      });
+      return;
+    }
     res.redirect(`/events/${eventId}`);
   }
 
