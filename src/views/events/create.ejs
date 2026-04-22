@@ -2,17 +2,32 @@
 <html>
   <head>
     <title>Create Event</title>
+   <script>
+  document.addEventListener("htmx:beforeSwap", function (e) {
+    if (e.detail.xhr.status === 400 || e.detail.xhr.status === 403) {
+      e.detail.shouldSwap = true;
+      e.detail.isError = false;
+    }
+  });
+</script>
   </head>
 
   <body>
     <h1>Create Event</h1>
 
-    <% if (pageError) { %>
-      <p style="color: red;"><%= pageError %></p>
-    <% } %>
+    <div id="form-error">
+      <% if (pageError) { %>
+        <p style="color: red;"><%= pageError %></p>
+      <% } %>
+    </div>
 
-    <form method="POST" action="/events">
-
+    <form
+      method="POST"
+      action="/events"
+      hx-post="/events"
+      hx-target="#form-error"
+      hx-swap="innerHTML"
+    >
       <div>
         <label>Title</label>
         <input type="text" name="title" required />

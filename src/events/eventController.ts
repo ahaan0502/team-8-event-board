@@ -57,40 +57,49 @@ class EventController implements IEventController {
   }
 
   async createEventFromForm(
-    res: Response,
-    input: Omit<CreateEventInput, "organizerId">,
-    store: AppSessionStore
-  ): Promise<void> {
-    const session = touchAppSession(store);
-    const user = getAuthenticatedUser(store);
+  res: Response,
+  input: Omit<CreateEventInput, "organizerId">,
+  store: AppSessionStore
+): Promise<void> {
+  const session = touchAppSession(store);
+  const user = getAuthenticatedUser(store);
+  const isHtmx = res.req?.get("HX-Request") === "true";
 
-    if (!user) {
-      this.logger.warn("Unauthorized event creation attempt");
-      res.status(403);
-      await this.showCreateEvent(res, session, "You must be logged in.");
+  if (!user) {
+    if (isHtmx) {
+      res.status(403).render("partials/error", {
+      message: "You must be logged in.",
+      layout: false,
+});
       return;
     }
-
-    const result = await this.service.createEvent({
-      ...input,
-      organizerId: user.userId,
-    });
-
-    if (result.ok === false) {
-      const error = result.value;
-      const status = this.mapErrorStatus(error);
-
-      const log = status >= 500 ? this.logger.error : this.logger.warn;
-      log.call(this.logger, `Event creation failed: ${error.message}`);
-
-      res.status(status);
-      await this.showCreateEvent(res, session, error.message);
-      return;
-    }
-
-    this.logger.info(`Created event ${result.value.id}`);
-    res.redirect(`/events/${result.value.id}`);
+    res.status(403).render("partials/error", { message: "You must be logged in.", layout: false });
+    return;
   }
+
+  const result = await this.service.createEvent({ ...input, organizerId: user.userId });
+
+  if (result.ok === false) {
+    if (isHtmx) {
+      res.status(400).render("partials/error", {
+      message: result.value.message,
+      layout: false,
+    });
+      return;
+    }
+    res.status(400);
+    await this.showCreateEvent(res, session, result.value.message);
+    return;
+  }
+
+  if (isHtmx) {
+    res.set("HX-Redirect", `/events/${result.value.id}`);
+    res.status(204).send();
+    return;
+  }
+
+  res.redirect(`/events/${result.value.id}`);
+}
 
   async getEventDetail(
   res: Response,
