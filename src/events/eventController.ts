@@ -49,6 +49,7 @@ class EventController implements IEventController {
       default:
         return 500;
     }
+  }
   async listEvents(req: Request, res: Response): Promise<void> {
     const q = typeof req.query.q === "string" ? req.query.q : undefined;
     const category = typeof req.query.category === "string" ? req.query.category : undefined;
@@ -280,15 +281,6 @@ class EventController implements IEventController {
       return;
     }
     res.redirect(`/events/${eventId}`);
-  }
-
-  private mapErrorStatus(error: EventError): number {
-    switch (error.type) {
-      case "NotFoundError": return 404;
-      case "NotAuthorizedError": return 403;
-      case "UnauthorizedError": return 401;
-      default: return 400;
-    }
   }
 }
 
