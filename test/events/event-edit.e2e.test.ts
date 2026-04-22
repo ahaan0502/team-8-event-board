@@ -90,4 +90,24 @@ describe("Event Edit Endpoint", () => {
         expect(res.status).toBe(400);
         expect(res.text).toContain("Title is required");
     });
+
+    it("returns 401 when user is not authenticated", async () => {
+        const eventId = await createEvent();
+
+        const res = await request(app)
+        .post(`/events/${eventId}`)
+        .set("HX-Request", "true")
+        .type("form")
+        .send({
+            title: "Should Fail",
+            description: "desc",
+            location: "ILC",
+            category: "Workshop",
+            startTime: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+            endTime: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
+            capacity: "5",
+        });
+
+        expect(res.status).toBe(401);
+    });
 });
