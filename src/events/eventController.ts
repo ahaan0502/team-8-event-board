@@ -45,6 +45,7 @@ class EventController implements IEventController {
       return 403;
 
     case "InvalidFilterError":
+    case "InvalidSearchError":
       return 400;
 
     default:

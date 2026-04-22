@@ -254,6 +254,7 @@ this.app.get(
     await this.eventController.showEventList(
       res,
       {
+        q: typeof req.query.q === "string" ? req.query.q : undefined,
         category: typeof req.query.category === "string" ? req.query.category : undefined,
         date: typeof req.query.date === "string" ? req.query.date : undefined,
       },

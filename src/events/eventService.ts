@@ -7,6 +7,7 @@ import {
   NotAuthorizedError,
   InvalidStateError,
   InvalidFilterError,
+  InvalidSearchError,
   type EventError,
 } from "./errors";
 import { Event } from "./event";
@@ -14,6 +15,7 @@ import type { EventRepository } from "./eventRepository";
 import type { UserRole } from "../auth/User";
 
 export interface EventQuery {
+  q?: string;
   category?: string;
   date?: string;
 }
@@ -70,6 +72,20 @@ class EventService implements IEventService {
       }
       filtered = filtered.filter(
         (event) => toLocalDateString(event.startDatetime) === requestedDate
+      );
+    }
+
+    if (filters.q && filters.q.trim() !== "") {
+      if (filters.q.trim().length > 200) {
+        return Err(InvalidSearchError("Search query must be 200 characters or fewer."));
+      }
+      const q = filters.q.trim().toLowerCase();
+      filtered = filtered.filter(
+        (event) =>
+          event.title.toLowerCase().includes(q) ||
+          event.description.toLowerCase().includes(q) ||
+          event.location.toLowerCase().includes(q) ||
+          event.category.toLowerCase().includes(q)
       );
     }
 
