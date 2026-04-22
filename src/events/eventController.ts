@@ -29,7 +29,18 @@ class EventController implements IEventController {
   ) {}
 
   private mapErrorStatus(error: EventError): number {
-    if (error.type === "ValidationError") return 400;
+    if (
+      error.type === "ValidationError" ||
+      error.type === "InvalidTimeRangeError" ||
+      error.type === "InvalidCapacityError" ||
+      error.type === "InvalidStateError"
+    ) {
+      return 400;
+    }
+  
+    if (error.type === "NotFoundError") return 404;
+    if (error.type === "UnauthorizedError" || error.type === "NotAuthorizedError") return 403;
+  
     return 500;
   }
 
