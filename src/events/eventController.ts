@@ -1,5 +1,5 @@
 import type { Response } from "express";
-import type { IEventService, CreateEventInput } from "./eventService";
+import type { IEventService, CreateEventInput, EventQuery } from "./eventService";
 import {
   touchAppSession,
   getAuthenticatedUser,
@@ -11,6 +11,7 @@ import type { EventError } from "./errors";
 import { IRSVPService } from "./rsvpService";
 
 export interface IEventController {
+  showEventList(res: Response, query: EventQuery, store: AppSessionStore): Promise<void>;
   showCreateEvent(res: Response, session: IAppBrowserSession, pageError?: string | null): Promise<void>;
   createEventFromForm(res: Response, input: Omit<CreateEventInput, "organizerId">, store: AppSessionStore): Promise<void>;
   getEventDetail(res: Response, eventId: string, store: AppSessionStore): Promise<void>;
@@ -43,10 +44,52 @@ class EventController implements IEventController {
     case "NotAuthorizedError":
       return 403;
 
+    case "InvalidFilterError":
+      return 400;
+
     default:
       return 500;
   }
 }
+
+  async showEventList(
+    res: Response,
+    query: EventQuery,
+    store: AppSessionStore
+  ): Promise<void> {
+    const session = touchAppSession(store);
+    const isHtmx = res.req?.get("HX-Request") === "true";
+
+    const result = await this.service.listEvents(query);
+
+    if (result.ok === false) {
+      const partial = "events/partials/eventList";
+      const data = { events: [], filters: query, pageError: result.value.message, layout: false };
+      if (isHtmx) {
+        res.status(400).render(partial, data);
+        return;
+      }
+      res.status(400).render("events/index", { ...data, session, layout: undefined });
+      return;
+    }
+
+    if (isHtmx) {
+      res.render("events/partials/eventList", {
+        events: result.value,
+        filters: query,
+        pageError: null,
+        layout: false,
+      });
+      return;
+    }
+
+    res.render("events/index", {
+      events: result.value,
+      filters: query,
+      session,
+      pageError: null,
+    });
+  }
 
   async showCreateEvent(
     res: Response,

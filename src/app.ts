@@ -248,6 +248,21 @@ class ExpressApp implements IApp {
     // ── Event routes ────────────────────────────────────────────────
 
 this.app.get(
+  "/events",
+  asyncHandler(async (req, res) => {
+    if (!this.requireAuthenticated(req, res)) return;
+    await this.eventController.showEventList(
+      res,
+      {
+        category: typeof req.query.category === "string" ? req.query.category : undefined,
+        date: typeof req.query.date === "string" ? req.query.date : undefined,
+      },
+      sessionStore(req)
+    );
+  })
+);
+
+this.app.get(
   "/events/new",
   asyncHandler(async (req, res) => {
     if (!this.requireAuthenticated(req, res)) {
