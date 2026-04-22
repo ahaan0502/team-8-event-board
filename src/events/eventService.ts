@@ -7,6 +7,7 @@ import {
   NotAuthorizedError,
   InvalidStateError,
   InvalidFilterError,
+  InvalidSearchError,
   type EventError,
 } from "./errors";
 import { Event } from "./event";
@@ -78,6 +79,9 @@ class EventService implements IEventService {
     }
 
     if (filters.q && filters.q.trim() !== "") {
+      if (filters.q.trim().length > 200) {
+        return Err(InvalidSearchError("Search query must be 200 characters or fewer."));
+      }
       const q = filters.q.trim().toLowerCase();
       filtered = filtered.filter((event) => {
         return (
