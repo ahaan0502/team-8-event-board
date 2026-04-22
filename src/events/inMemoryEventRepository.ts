@@ -10,8 +10,8 @@ const sampleEvents: Event[] = [
     category: 'Tech',
     status: 'published',
     capacity: 20,
-    startDatetime: new Date('2026-04-20T18:00:00'),
-    endDatetime: new Date('2026-04-20T20:00:00'),
+    startDatetime: new Date('2026-05-10T18:00:00'),
+    endDatetime: new Date('2026-05-10T20:00:00'),
     organizerId: 'user-staff',
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -24,8 +24,8 @@ const sampleEvents: Event[] = [
     category: 'Social',
     status: 'draft',
     capacity: 40,
-    startDatetime: new Date('2026-04-22T17:00:00'),
-    endDatetime: new Date('2026-04-22T19:00:00'),
+    startDatetime: new Date('2026-05-12T17:00:00'),
+    endDatetime: new Date('2026-05-12T19:00:00'),
     organizerId: 'user-staff',
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -38,8 +38,8 @@ const sampleEvents: Event[] = [
     category: 'Entertainment',
     status: 'published',
     capacity: 100,
-    startDatetime: new Date('2026-04-25T19:00:00'),
-    endDatetime: new Date('2026-04-25T21:00:00'),
+    startDatetime: new Date('2026-05-15T19:00:00'),
+    endDatetime: new Date('2026-05-15T21:00:00'),
     organizerId: 'user-staff',
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -51,6 +51,10 @@ const events = new Map<string, Event>(
 )
 
 export class InMemoryEventRepository implements EventRepository {
+  async getAll(): Promise<Event[]> {
+    return Array.from(events.values())
+  }
+
   async create(event: Event): Promise<Event> {
     events.set(event.id, event)
     return event
