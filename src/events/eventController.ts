@@ -200,7 +200,7 @@ class EventController implements IEventController {
   ): Promise<void> {
     const user = getAuthenticatedUser(store);
     if (!user) {
-      res.status(403).send("Must be logged in");
+      res.status(401).send("Must be logged in");
       return;
     }
 
