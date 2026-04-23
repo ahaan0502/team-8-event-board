@@ -1,41 +1,17 @@
 <h1>Organizer Dashboard</h1>
 
-<h2>Draft</h2>
-<% if (dashboard.draft.length === 0) { %>
-  <p>No draft events.</p>
-<% } %>
-<% dashboard.draft.forEach(item => { %>
-  <div>
-    <strong><%= item.event.title %></strong> - Attendees: <%= item.attendeeCount %>
-  </div>
-<% }) %>
+<div class="mb-4">
+  <button
+    class="px-3 py-2 rounded bg-slate-200 hover:bg-slate-300"
+    hx-get="/organizer/events"
+    hx-target="#organizer-dashboard-sections"
+    hx-select="#organizer-dashboard-sections"
+    hx-swap="outerHTML"
+  >
+    Refresh
+  </button>
+</div>
 
-<h2>Published</h2>
-<% if (dashboard.published.length === 0) { %>
-  <p>No published events.</p>
-<% } %>
-<% dashboard.published.forEach(item => { %>
-  <div>
-    <strong><%= item.event.title %></strong> - Attendees: <%= item.attendeeCount %>
-  </div>
-<% }) %>
-
-<h2>Cancelled</h2>
-<% if (dashboard.cancelled.length === 0) { %>
-  <p>No cancelled events.</p>
-<% } %>
-<% dashboard.cancelled.forEach(item => { %>
-  <div>
-    <strong><%= item.event.title %></strong> - Attendees: <%= item.attendeeCount %>
-  </div>
-<% }) %>
-
-<h2>Past</h2>
-<% if (dashboard.past.length === 0) { %>
-  <p>No past events.</p>
-<% } %>
-<% dashboard.past.forEach(item => { %>
-  <div>
-    <strong><%= item.event.title %></strong> - Attendees: <%= item.attendeeCount %>
-  </div>
-<% }) %>
+<div id="organizer-dashboard-sections">
+  <%- include("partials/dashboard-sections", { dashboard }) %>
+</div>

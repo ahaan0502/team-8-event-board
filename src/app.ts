@@ -286,7 +286,7 @@ this.app.post(
 this.app.get(
   "/my-rsvps",
   asyncHandler(async (req, res) => {
-    if (!this.requireAuthenticated(req, res)) {
+    if (!this.requireRole(req, res, ["user"], "Only members can access My RSVPs.")) {
       return;
     }
 
@@ -310,7 +310,14 @@ this.app.get(
 this.app.get(
   "/organizer/events",
   asyncHandler(async (req, res) => {
-    if (!this.requireAuthenticated(req, res)) {
+    if (
+      !this.requireRole(
+        req,
+        res,
+        ["staff", "admin"],
+        "Only staff and admins can access the organizer dashboard."
+      )
+    ) {
       return;
     }
 
