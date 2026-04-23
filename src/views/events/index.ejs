@@ -1,18 +1,28 @@
 <section class="glass-panel">
   <h1>Events</h1>
 
-  <% if (events.length === 0) { %>
-    <p>No events found.</p>
-  <% } else { %>
-    <ul>
-      <% events.forEach((event) => { %>
-        <li>
-          <strong><%= event.title %></strong>
-          <div><%= event.category %></div>
-          <div><%= event.location %></div>
-          <div><%= new Date(event.startDatetime).toLocaleString() %></div>
-        </li>
-      <% }) %>
-    </ul>
-  <% } %>
+  <form
+    hx-get="/events"
+    hx-target="#event-list"
+    hx-swap="innerHTML"
+  >
+    <label for="category">Category:</label>
+    <select id="category" name="category" onchange="this.form.requestSubmit()">
+      <option value="">All</option>
+      <option value="Tech">Tech</option>
+      <option value="Social">Social</option>
+      <option value="Entertainment">Entertainment</option>
+    </select>
+
+    <label for="timeframe">Timeframe:</label>
+    <select id="timeframe" name="timeframe" onchange="this.form.requestSubmit()">
+      <option value="">All upcoming</option>
+      <option value="week">This week</option>
+      <option value="weekend">This weekend</option>
+    </select>
+  </form>
+
+  <div id="event-list">
+    <%- include("partials/event-list", { events }) %>
+  </div>
 </section>
