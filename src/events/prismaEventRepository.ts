@@ -48,6 +48,28 @@ export class PrismaEventRepository implements EventRepository {
     return toDomain(created);
   }
 
+  async update(event: Event): Promise<Event> {
+    const updated = await prisma.event.update({
+      where: { id: event.id },
+      data: {
+        title: event.title,
+        description: event.description,
+        location: event.location,
+        category: event.category,
+
+        status: event.status as EventStatus,
+        capacity: event.capacity ?? null,
+
+        startDatetime: event.startDatetime,
+        endDatetime: event.endDatetime,
+
+        updatedAt: event.updatedAt,
+      },
+    });
+
+    return toDomain(updated);
+  }
+
   async getAll(): Promise<Event[]> {
     const events = await prisma.event.findMany();
     return events.map(toDomain);
