@@ -52,7 +52,6 @@ class ExpressApp implements IApp {
   }
 
   private registerMiddleware(): void {
-    // Serve static files from src/static (create this directory to add your own assets)
     this.app.use(express.static(path.join(process.cwd(), "src/static")));
     this.app.use(
       session({
@@ -80,10 +79,6 @@ class ExpressApp implements IApp {
     return req.get("HX-Request") === "true";
   }
 
-  /**
-   * Middleware helper: returns true if the request is from an authenticated user.
-   * If the user is not authenticated, it handles the response (redirect or 401).
-   */
   private requireAuthenticated(req: Request, res: Response): boolean {
     const store = sessionStore(req);
     touchAppSession(store);
@@ -105,11 +100,6 @@ class ExpressApp implements IApp {
     return false;
   }
 
-  /**
-   * Middleware helper: returns true if the authenticated user has one of the
-   * allowed roles. Calls requireAuthenticated first, so unauthenticated
-   * requests are handled automatically.
-   */
   private requireRole(
     req: Request,
     res: Response,
@@ -136,8 +126,6 @@ class ExpressApp implements IApp {
   }
 
   private registerRoutes(): void {
-    // ── Public routes ────────────────────────────────────────────────
-
     this.app.get(
       "/",
       asyncHandler(async (req, res) => {
@@ -177,8 +165,6 @@ class ExpressApp implements IApp {
         await this.authController.logoutFromForm(res, sessionStore(req));
       }),
     );
-
-    // ── Admin routes ─────────────────────────────────────────────────
 
     this.app.get(
       "/admin/users",
@@ -245,212 +231,229 @@ class ExpressApp implements IApp {
       }),
     );
 
-    // ── Event routes ────────────────────────────────────────────────
+    this.app.get(
+      "/events",
+      asyncHandler(async (req, res) => {
+        if (!this.requireAuthenticated(req, res)) {
+          return;
+        }
 
-this.app.get(
-  "/events/new",
-  asyncHandler(async (req, res) => {
-    if (!this.requireAuthenticated(req, res)) {
-      return;
-    }
+        const category =
+          typeof req.query.category === "string" ? req.query.category : undefined;
 
-    const session = touchAppSession(sessionStore(req));
-    await this.eventController.showCreateEvent(res, session);
-  }),
+        const timeframe =
+          typeof req.query.timeframe === "string" ? req.query.timeframe : undefined;
+
+        await this.eventController.listEvents(
+  res,
+  sessionStore(req),
+  category,
+  timeframe as "all" | "week" | "weekend" | undefined
 );
-
-this.app.post(
-  "/events",
-  asyncHandler(async (req, res) => {
-    if (!this.requireAuthenticated(req, res)) {
-      return;
-    }
-
-    await this.eventController.createEventFromForm(
-      res,
-      {
-        title: typeof req.body.title === "string" ? req.body.title : "",
-        description:
-          typeof req.body.description === "string" ? req.body.description : "",
-        location: typeof req.body.location === "string" ? req.body.location : "",
-        category: typeof req.body.category === "string" ? req.body.category : "",
-        startTime: new Date(req.body.startTime),
-        endTime: new Date(req.body.endTime),
-        capacity: Number(req.body.capacity),
-      },
-      sessionStore(req),
+      }),
     );
-  }),
-);
 
-this.app.get(
-  "/my-rsvps",
-  asyncHandler(async (req, res) => {
-    if (!this.requireRole(req, res, ["user"], "Only members can access My RSVPs.")) {
-      return;
-    }
+    this.app.get(
+      "/events/new",
+      asyncHandler(async (req, res) => {
+        if (!this.requireAuthenticated(req, res)) {
+          return;
+        }
 
-    const user = getAuthenticatedUser(sessionStore(req));
-    if (!user) {
-      res.redirect("/login");
-      return;
-    }
-
-    const browserSession = recordPageView(sessionStore(req));
-
-    await this.rsvpDashboardController.getMyRsvpsPage(
-      req,
-      res,
-      user.userId,
-      browserSession
+        const session = touchAppSession(sessionStore(req));
+        await this.eventController.showCreateEvent(res, session);
+      }),
     );
-  }),
-);
 
-this.app.get(
-  "/organizer/events",
-  asyncHandler(async (req, res) => {
-    if (
-      !this.requireRole(
-        req,
-        res,
-        ["staff", "admin"],
-        "Only staff and admins can access the organizer dashboard."
-      )
-    ) {
-      return;
-    }
+    this.app.post(
+      "/events",
+      asyncHandler(async (req, res) => {
+        if (!this.requireAuthenticated(req, res)) {
+          return;
+        }
 
-    const user = getAuthenticatedUser(sessionStore(req));
-    if (!user) {
-      res.redirect("/login");
-      return;
-    }
-
-    const browserSession = recordPageView(sessionStore(req));
-
-    await this.organizerDashboardController.getOrganizerDashboardPage(
-      req,
-      res,
-      user.userId,
-      browserSession
+        await this.eventController.createEventFromForm(
+          res,
+          {
+            title: typeof req.body.title === "string" ? req.body.title : "",
+            description:
+              typeof req.body.description === "string" ? req.body.description : "",
+            location: typeof req.body.location === "string" ? req.body.location : "",
+            category: typeof req.body.category === "string" ? req.body.category : "",
+            startTime: new Date(req.body.startTime),
+            endTime: new Date(req.body.endTime),
+            capacity: Number(req.body.capacity),
+          },
+          sessionStore(req),
+        );
+      }),
     );
-  }),
-);
-    
-this.app.get(
-  "/events/:id/edit",
-  asyncHandler(async (req, res) => {
-    if (!this.requireAuthenticated(req, res)) {
-      return;
-    }
 
-    const eventId =
-      typeof req.params.id === "string" ? req.params.id : "";
+    this.app.get(
+      "/my-rsvps",
+      asyncHandler(async (req, res) => {
+        if (!this.requireRole(req, res, ["user"], "Only members can access My RSVPs.")) {
+          return;
+        }
 
-    await this.eventController.showEditEvent(
-      res,
-      eventId,
-      sessionStore(req)
+        const user = getAuthenticatedUser(sessionStore(req));
+        if (!user) {
+          res.redirect("/login");
+          return;
+        }
+
+        const browserSession = recordPageView(sessionStore(req));
+
+        await this.rsvpDashboardController.getMyRsvpsPage(
+          req,
+          res,
+          user.userId,
+          browserSession
+        );
+      }),
     );
-  }),
-);
 
-this.app.get(
-  "/events/:id",
-  asyncHandler(async (req, res) => {
-    if (!this.requireAuthenticated(req, res)) {
-      return;
-    }
+    this.app.get(
+      "/organizer/events",
+      asyncHandler(async (req, res) => {
+        if (
+          !this.requireRole(
+            req,
+            res,
+            ["staff", "admin"],
+            "Only staff and admins can access the organizer dashboard."
+          )
+        ) {
+          return;
+        }
 
-    const eventId =
-      typeof req.params.id === "string" ? req.params.id : "";
+        const user = getAuthenticatedUser(sessionStore(req));
+        if (!user) {
+          res.redirect("/login");
+          return;
+        }
 
-    await this.eventController.getEventDetail(
-      res,
-      eventId,
-      sessionStore(req)
+        const browserSession = recordPageView(sessionStore(req));
+
+        await this.organizerDashboardController.getOrganizerDashboardPage(
+          req,
+          res,
+          user.userId,
+          browserSession
+        );
+      }),
     );
-  }),
-);
 
-this.app.post(
-  "/events/:id",
-  asyncHandler(async (req, res) => {
-    if (!this.requireAuthenticated(req, res)) {
-      return;
-    }
+    this.app.get(
+      "/events/:id/edit",
+      asyncHandler(async (req, res) => {
+        if (!this.requireAuthenticated(req, res)) {
+          return;
+        }
 
-    const eventId =
-      typeof req.params.id === "string" ? req.params.id : "";
+        const eventId =
+          typeof req.params.id === "string" ? req.params.id : "";
 
-    await this.eventController.updateEventFromForm(
-      res,
-      eventId,
-      {
-        title: typeof req.body.title === "string" ? req.body.title : "",
-        description:
-          typeof req.body.description === "string" ? req.body.description : "",
-        location: typeof req.body.location === "string" ? req.body.location : "",
-        category: typeof req.body.category === "string" ? req.body.category : "",
-        startTime: new Date(req.body.startTime),
-        endTime: new Date(req.body.endTime),
-        capacity: Number(req.body.capacity),
-      },
-      sessionStore(req)
+        await this.eventController.showEditEvent(
+          res,
+          eventId,
+          sessionStore(req)
+        );
+      }),
     );
-  })
-);
 
-this.app.post(
-  "/events/:id/publish",
-  asyncHandler(async (req, res) => {
-    if (!this.requireAuthenticated(req, res)) return;
-    const eventId = typeof req.params.id === "string" ? req.params.id : "";
-    const htmx = req.get("HX-Request") === "true";
-    await this.eventController.publishEventFromForm(res, eventId, sessionStore(req), htmx);
-  })
-);
+    this.app.get(
+      "/events/:id",
+      asyncHandler(async (req, res) => {
+        if (!this.requireAuthenticated(req, res)) {
+          return;
+        }
 
-this.app.post(
-  "/events/:id/cancel",
-  asyncHandler(async (req, res) => {
-    if (!this.requireAuthenticated(req, res)) return;
-    const eventId = typeof req.params.id === "string" ? req.params.id : "";
-    const htmx = req.get("HX-Request") === "true";
-    await this.eventController.cancelEventFromForm(res, eventId, sessionStore(req), htmx);
-  })
-);
+        const eventId =
+          typeof req.params.id === "string" ? req.params.id : "";
 
-this.app.post(
-  "/events/:id/rsvp",
-  asyncHandler(async (req, res) => {
-    if (!this.requireAuthenticated(req, res)) {
-      return;
-    }
-
-    const eventId =
-      typeof req.params.id === "string" ? req.params.id : "";
-
-    await this.eventController.toggleRSVP(
-      res,
-      eventId,
-      sessionStore(req)
+        await this.eventController.getEventDetail(
+          res,
+          eventId,
+          sessionStore(req)
+        );
+      }),
     );
-  })
-);
 
-this.app.get(
-  "/events/:id/attendees",
-  asyncHandler(async (req, res) => {
-    if (!this.requireAuthenticated(req, res)) return;
-    const eventId = typeof req.params.id === "string" ? req.params.id : "";
-    await this.attendeeController.showAttendeeList(res, eventId, sessionStore(req));
-  })
-);
+    this.app.post(
+      "/events/:id",
+      asyncHandler(async (req, res) => {
+        if (!this.requireAuthenticated(req, res)) {
+          return;
+        }
 
-    // ── Authenticated home page ──────────────────────────────────────
-    // TODO: Replace this placeholder with your project's main page.
+        const eventId =
+          typeof req.params.id === "string" ? req.params.id : "";
+
+        await this.eventController.updateEventFromForm(
+          res,
+          eventId,
+          {
+            title: typeof req.body.title === "string" ? req.body.title : "",
+            description:
+              typeof req.body.description === "string" ? req.body.description : "",
+            location: typeof req.body.location === "string" ? req.body.location : "",
+            category: typeof req.body.category === "string" ? req.body.category : "",
+            startTime: new Date(req.body.startTime),
+            endTime: new Date(req.body.endTime),
+            capacity: Number(req.body.capacity),
+          },
+          sessionStore(req)
+        );
+      })
+    );
+
+    this.app.post(
+      "/events/:id/publish",
+      asyncHandler(async (req, res) => {
+        if (!this.requireAuthenticated(req, res)) return;
+        const eventId = typeof req.params.id === "string" ? req.params.id : "";
+        const htmx = req.get("HX-Request") === "true";
+        await this.eventController.publishEventFromForm(res, eventId, sessionStore(req), htmx);
+      })
+    );
+
+    this.app.post(
+      "/events/:id/cancel",
+      asyncHandler(async (req, res) => {
+        if (!this.requireAuthenticated(req, res)) return;
+        const eventId = typeof req.params.id === "string" ? req.params.id : "";
+        const htmx = req.get("HX-Request") === "true";
+        await this.eventController.cancelEventFromForm(res, eventId, sessionStore(req), htmx);
+      })
+    );
+
+    this.app.post(
+      "/events/:id/rsvp",
+      asyncHandler(async (req, res) => {
+        if (!this.requireAuthenticated(req, res)) {
+          return;
+        }
+
+        const eventId =
+          typeof req.params.id === "string" ? req.params.id : "";
+
+        await this.eventController.toggleRSVP(
+          res,
+          eventId,
+          sessionStore(req)
+        );
+      })
+    );
+
+    this.app.get(
+      "/events/:id/attendees",
+      asyncHandler(async (req, res) => {
+        if (!this.requireAuthenticated(req, res)) return;
+        const eventId = typeof req.params.id === "string" ? req.params.id : "";
+        await this.attendeeController.showAttendeeList(res, eventId, sessionStore(req));
+      })
+    );
 
     this.app.get(
       "/home",
@@ -464,8 +467,6 @@ this.app.get(
         res.render("home", { session: browserSession, pageError: null });
       }),
     );
-
-    // ── Error handler ────────────────────────────────────────────────
 
     this.app.use((err: unknown, _req: Request, res: Response, _next: (value?: unknown) => void) => {
       const message = err instanceof Error ? err.message : "Unexpected server error.";

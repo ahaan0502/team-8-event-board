@@ -11,6 +11,12 @@ import type { EventError } from "./errors";
 import { IRSVPService } from "./rsvpService";
 
 export interface IEventController {
+  listEvents(
+    res: Response,
+    store: AppSessionStore,
+    category?: string,
+    timeframe?: "all" | "week" | "weekend"
+  ): Promise<void>;
   showCreateEvent(res: Response, session: IAppBrowserSession, pageError?: string | null): Promise<void>;
   createEventFromForm(res: Response, input: Omit<CreateEventInput, "organizerId">, store: AppSessionStore): Promise<void>;
   getEventDetail(res: Response, eventId: string, store: AppSessionStore): Promise<void>;
@@ -29,24 +35,52 @@ class EventController implements IEventController {
   ) {}
 
   private mapErrorStatus(error: EventError): number {
-  switch (error.type) {
-    case "ValidationError":
-    case "InvalidTimeRangeError":
-    case "InvalidCapacityError":
-    case "InvalidStateError":
-      return 400;
+    switch (error.type) {
+      case "ValidationError":
+      case "InvalidTimeRangeError":
+      case "InvalidCapacityError":
+      case "InvalidStateError":
+        return 400;
 
-    case "NotFoundError":
-      return 404;
+      case "NotFoundError":
+        return 404;
 
-    case "UnauthorizedError":
-    case "NotAuthorizedError":
-      return 403;
+      case "UnauthorizedError":
+      case "NotAuthorizedError":
+        return 403;
 
-    default:
-      return 500;
+      default:
+        return 500;
+    }
   }
-}
+
+  async listEvents(
+    res: Response,
+    store: AppSessionStore,
+    category?: string,
+    timeframe?: "all" | "week" | "weekend"
+  ): Promise<void> {
+    const session = touchAppSession(store);
+
+    const result = await this.service.listPublishedEvents({
+      category,
+      timeframe,
+    });
+
+    if (result.ok === false) {
+      res.status(400).render("partials/error", {
+        message: result.value.message,
+        layout: false,
+      });
+      return;
+    }
+
+    res.render("events/index", {
+      events: result.value,
+      session,
+      pageError: null,
+    });
+  }
 
   async showCreateEvent(
     res: Response,
@@ -57,116 +91,123 @@ class EventController implements IEventController {
   }
 
   async createEventFromForm(
-  res: Response,
-  input: Omit<CreateEventInput, "organizerId">,
-  store: AppSessionStore
-): Promise<void> {
-  const session = touchAppSession(store);
-  const user = getAuthenticatedUser(store);
-  const isHtmx = res.req?.get("HX-Request") === "true";
+    res: Response,
+    input: Omit<CreateEventInput, "organizerId">,
+    store: AppSessionStore
+  ): Promise<void> {
+    const session = touchAppSession(store);
+    const user = getAuthenticatedUser(store);
+    const isHtmx = res.req?.get("HX-Request") === "true";
 
-  if (!user) {
-    if (isHtmx) {
+    if (!user) {
+      if (isHtmx) {
+        res.status(403).render("partials/error", {
+          message: "You must be logged in.",
+          layout: false,
+        });
+        return;
+      }
       res.status(403).render("partials/error", {
-      message: "You must be logged in.",
-      layout: false,
-});
+        message: "You must be logged in.",
+        layout: false,
+      });
       return;
     }
-    res.status(403).render("partials/error", { message: "You must be logged in.", layout: false });
-    return;
-  }
 
-  const result = await this.service.createEvent({ ...input, organizerId: user.userId });
-
-  if (result.ok === false) {
-    if (isHtmx) {
-      res.status(400).render("partials/error", {
-      message: result.value.message,
-      layout: false,
+    const result = await this.service.createEvent({
+      ...input,
+      organizerId: user.userId,
     });
+
+    if (result.ok === false) {
+      if (isHtmx) {
+        res.status(400).render("partials/error", {
+          message: result.value.message,
+          layout: false,
+        });
+        return;
+      }
+      res.status(400);
+      await this.showCreateEvent(res, session, result.value.message);
       return;
     }
-    res.status(400);
-    await this.showCreateEvent(res, session, result.value.message);
-    return;
-  }
 
-  if (isHtmx) {
-    res.set("HX-Redirect", `/events/${result.value.id}`);
-    res.status(204).send();
-    return;
-  }
+    if (isHtmx) {
+      res.set("HX-Redirect", `/events/${result.value.id}`);
+      res.status(204).send();
+      return;
+    }
 
-  res.redirect(`/events/${result.value.id}`);
-}
+    res.redirect(`/events/${result.value.id}`);
+  }
 
   async getEventDetail(
-  res: Response,
-  eventId: string,
-  store: AppSessionStore
-): Promise<void> {
-  const session = touchAppSession(store);
-  const user = getAuthenticatedUser(store);
+    res: Response,
+    eventId: string,
+    store: AppSessionStore
+  ): Promise<void> {
+    const session = touchAppSession(store);
+    const user = getAuthenticatedUser(store);
 
-  const result = await this.service.getEventById(
-    eventId,
-    user?.userId
-  );
+    const result = await this.service.getEventById(
+      eventId,
+      user?.userId
+    );
 
-  if (result.ok === false) {
-    const error = result.value;
+    if (result.ok === false) {
+      const error = result.value;
 
-    const status =
-      error.type === "NotFoundError" ? 404 : 500;
+      const status =
+        error.type === "NotFoundError" ? 404 : 500;
 
-    const log = status >= 500 ? this.logger.error : this.logger.warn;
-    log.call(this.logger, `Event detail failed: ${error.message}`);
+      const log = status >= 500 ? this.logger.error : this.logger.warn;
+      log.call(this.logger, `Event detail failed: ${error.message}`);
 
-    res.status(status).render("partials/error", {
-      message: error.message,
-      layout: false,
+      res.status(status).render("partials/error", {
+        message: error.message,
+        layout: false,
+      });
+      return;
+    }
+
+    res.render("events/detail", {
+      event: result.value,
+      session,
+      pageError: null,
     });
-    return;
   }
 
-  res.render("events/detail", {
-    event: result.value,
-    session,
-    pageError: null,
-  });
-}
   async showEditEvent(
-  res: Response,
-  eventId: string,
-  store: AppSessionStore,
-  pageError: string | null = null
-): Promise<void> {
-  const session = touchAppSession(store);
-  const user = getAuthenticatedUser(store);
+    res: Response,
+    eventId: string,
+    store: AppSessionStore,
+    pageError: string | null = null
+  ): Promise<void> {
+    const session = touchAppSession(store);
+    const user = getAuthenticatedUser(store);
 
-  const result = await this.service.getEventById(
-    eventId,
-    user?.userId
-  );
+    const result = await this.service.getEventById(
+      eventId,
+      user?.userId
+    );
 
-  if (result.ok === false) {
-    res.status(404).send("Event not found");
-    return;
+    if (result.ok === false) {
+      res.status(404).send("Event not found");
+      return;
+    }
+
+    res.render("events/edit", {
+      event: result.value,
+      session,
+      pageError,
+    });
   }
-
-  res.render("events/edit", {
-    event: result.value,
-    session,
-    pageError,
-  });
-}
 
   async updateEventFromForm(
-  res: Response,
-  eventId: string,
-  input: Omit<CreateEventInput, "organizerId">,
-  store: AppSessionStore
+    res: Response,
+    eventId: string,
+    input: Omit<CreateEventInput, "organizerId">,
+    store: AppSessionStore
   ): Promise<void> {
     const session = touchAppSession(store);
     const user = getAuthenticatedUser(store);
@@ -270,24 +311,37 @@ class EventController implements IEventController {
   ): Promise<void> {
     const user = getAuthenticatedUser(store);
     if (!user) {
-      res.status(403).render("partials/error", { message: "You must be logged in.", layout: false });
+      res.status(403).render("partials/error", {
+        message: "You must be logged in.",
+        layout: false,
+      });
       return;
     }
 
     const result = await this.service.publishEvent(eventId, user.userId, user.role);
 
     if (result.ok === false) {
-      const status = result.value.type === "NotFoundError" ? 404
-        : result.value.type === "NotAuthorizedError" ? 403 : 400;
+      const status = result.value.type === "NotFoundError"
+        ? 404
+        : result.value.type === "NotAuthorizedError"
+          ? 403
+          : 400;
       this.logger.warn(`Publish failed for ${eventId}: ${result.value.message}`);
-      res.status(status).render("partials/error", { message: result.value.message, layout: false });
+      res.status(status).render("partials/error", {
+        message: result.value.message,
+        layout: false,
+      });
       return;
     }
 
     this.logger.info(`Published event ${eventId}`);
     if (htmx) {
       const session = touchAppSession(store);
-      res.render("events/partials/organizer-controls", { event: result.value, session, layout: false });
+      res.render("events/partials/organizer-controls", {
+        event: result.value,
+        session,
+        layout: false,
+      });
       return;
     }
     res.redirect(`/events/${eventId}`);
@@ -301,24 +355,37 @@ class EventController implements IEventController {
   ): Promise<void> {
     const user = getAuthenticatedUser(store);
     if (!user) {
-      res.status(403).render("partials/error", { message: "You must be logged in.", layout: false });
+      res.status(403).render("partials/error", {
+        message: "You must be logged in.",
+        layout: false,
+      });
       return;
     }
 
     const result = await this.service.cancelEvent(eventId, user.userId, user.role);
 
     if (result.ok === false) {
-      const status = result.value.type === "NotFoundError" ? 404
-        : result.value.type === "NotAuthorizedError" ? 403 : 400;
+      const status = result.value.type === "NotFoundError"
+        ? 404
+        : result.value.type === "NotAuthorizedError"
+          ? 403
+          : 400;
       this.logger.warn(`Cancel failed for ${eventId}: ${result.value.message}`);
-      res.status(status).render("partials/error", { message: result.value.message, layout: false });
+      res.status(status).render("partials/error", {
+        message: result.value.message,
+        layout: false,
+      });
       return;
     }
 
     this.logger.info(`Cancelled event ${eventId}`);
     if (htmx) {
       const session = touchAppSession(store);
-      res.render("events/partials/organizer-controls", { event: result.value, session, layout: false });
+      res.render("events/partials/organizer-controls", {
+        event: result.value,
+        session,
+        layout: false,
+      });
       return;
     }
     res.redirect(`/events/${eventId}`);
