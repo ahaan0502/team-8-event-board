@@ -1,24 +1,21 @@
-import { Ok, type Result } from '../lib/result'
-import type { Event } from '../events/event'
-import type { EventRepository } from '../events/eventRepository'
-import type { RSVP, RSVPStatus } from './RSVP'
-import type { RSVPRepository } from './RSVPRepository'
+import { Ok, type Result } from "../lib/result";
+import type { Event } from "../events/event";
+import type { EventRepository } from "../events/eventRepository";
+import type { RSVP } from "./RSVP";
+import type { RSVPRepository } from "./RSVPRepository";
 
 export type DashboardItem = {
-  rsvp: RSVP
-  event: Event
-}
+  rsvp: RSVP;
+  event: Event;
+};
 
 export type MyRsvpsDashboard = {
-  going: DashboardItem[]
-  waitlisted: DashboardItem[]
-  cancelled: DashboardItem[]
-}
+  upcoming: DashboardItem[];
+  pastCancelled: DashboardItem[];
+};
 
 export interface IRSVPDashboardService {
-  getMyRsvpsDashboard(
-    userId: string
-  ): Promise<Result<MyRsvpsDashboard, never>>
+  getMyRsvpsDashboard(userId: string): Promise<Result<MyRsvpsDashboard, never>>;
 }
 
 class RSVPDashboardService implements IRSVPDashboardService {
@@ -30,34 +27,42 @@ class RSVPDashboardService implements IRSVPDashboardService {
   async getMyRsvpsDashboard(
     userId: string
   ): Promise<Result<MyRsvpsDashboard, never>> {
-    const userRsvps = await this.rsvpRepository.findByUserId(userId)
+    const userRsvps = await this.rsvpRepository.findByUserId(userId);
+    const eventIds = userRsvps.map((rsvp) => rsvp.eventId);
+    const events = await this.eventRepository.getEventsByIds(eventIds);
 
-    const eventIds = userRsvps.map((rsvp) => rsvp.eventId)
-    const events = await this.eventRepository.getEventsByIds(eventIds)
-
-    const eventMap = new Map<string, Event>(
-      events.map((event) => [event.id, event])
-    )
+    const eventMap = new Map<string, Event>(events.map((event) => [event.id, event]));
 
     const dashboard: MyRsvpsDashboard = {
-      going: [],
-      waitlisted: [],
-      cancelled: [],
-    }
+      upcoming: [],
+      pastCancelled: [],
+    };
+
+    const now = Date.now();
 
     for (const rsvp of userRsvps) {
-      const event = eventMap.get(rsvp.eventId)
-      if (!event) continue
+      const event = eventMap.get(rsvp.eventId);
+      if (!event) continue;
 
-      const item: DashboardItem = {
-        rsvp,
-        event,
+      const item: DashboardItem = { rsvp, event };
+
+      const isPastEvent = event.status === "past" || event.startDatetime.getTime() < now;
+      const isCancelledRsvp = rsvp.status === "cancelled";
+
+      if (isPastEvent || isCancelledRsvp) {
+        dashboard.pastCancelled.push(item);
+      } else {
+        dashboard.upcoming.push(item);
       }
-
-      dashboard[rsvp.status].push(item)
     }
 
-    return Ok(dashboard)
+    const byStartAsc = (a: DashboardItem, b: DashboardItem) =>
+      a.event.startDatetime.getTime() - b.event.startDatetime.getTime();
+
+    dashboard.upcoming.sort(byStartAsc);
+    dashboard.pastCancelled.sort(byStartAsc);
+
+    return Ok(dashboard);
   }
 }
 
@@ -65,5 +70,5 @@ export function CreateRSVPDashboardService(
   rsvpRepository: RSVPRepository,
   eventRepository: EventRepository
 ): IRSVPDashboardService {
-  return new RSVPDashboardService(rsvpRepository, eventRepository)
+  return new RSVPDashboardService(rsvpRepository, eventRepository);
 }

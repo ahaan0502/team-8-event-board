@@ -1,22 +1,17 @@
 <h1>My RSVPs</h1>
 
-<h2>Going</h2>
-<% dashboard.going.forEach(item => { %>
-  <div>
-    <strong><%= item.event.title %></strong>
-  </div>
-<% }) %>
+<div class="mb-4">
+  <button
+    class="px-3 py-2 rounded bg-slate-200 hover:bg-slate-300"
+    hx-get="/my-rsvps"
+    hx-target="#my-rsvps-sections"
+    hx-select="#my-rsvps-sections"
+    hx-swap="outerHTML"
+  >
+    Refresh
+  </button>
+</div>
 
-<h2>Waitlisted</h2>
-<% dashboard.waitlisted.forEach(item => { %>
-  <div>
-    <strong><%= item.event.title %></strong>
-  </div>
-<% }) %>
-
-<h2>Cancelled</h2>
-<% dashboard.cancelled.forEach(item => { %>
-  <div>
-    <strong><%= item.event.title %></strong>
-  </div>
-<% }) %>
+<div id="my-rsvps-sections">
+  <%- include("partials/dashboard-sections", { dashboard }) %>
+</div>

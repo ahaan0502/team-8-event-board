@@ -1,7 +1,16 @@
 import { Ok, Err, type Result } from "../lib/result";
-import { ValidationError, type EventError, NotFoundError, InvalidTimeRangeError, InvalidCapacityError } from "./errors";
+import {
+  ValidationError,
+  type EventError,
+  NotFoundError,
+  InvalidTimeRangeError,
+  InvalidCapacityError,
+  NotAuthorizedError,
+  InvalidStateError,
+} from "./errors";
 import { Event } from "./event";
 import type { EventRepository } from "./eventRepository";
+import type { UserRole } from "../auth/User";
 
 export interface CreateEventInput {
   title: string;
@@ -14,13 +23,35 @@ export interface CreateEventInput {
   organizerId: string;
 }
 
+export interface EventFilterInput {
+  category?: string;
+  timeframe?: "all" | "week" | "weekend";
+}
+
 export interface IEventService {
   createEvent(input: CreateEventInput): Promise<Result<Event, EventError>>;
-  updateEvent(eventId: string, input: Omit<CreateEventInput, "organizerId">, actingUserId: string): Promise<Result<Event, EventError>>;
+  updateEvent(
+    eventId: string,
+    input: Omit<CreateEventInput, "organizerId">,
+    actingUserId: string
+  ): Promise<Result<Event, EventError>>;
   getEventById(
     eventId: string,
     actingUserId?: string
   ): Promise<Result<Event, EventError>>;
+  publishEvent(
+    eventId: string,
+    userId: string,
+    userRole: UserRole
+  ): Promise<Result<Event, EventError>>;
+  cancelEvent(
+    eventId: string,
+    userId: string,
+    userRole: UserRole
+  ): Promise<Result<Event, EventError>>;
+  listPublishedEvents(
+    filters: EventFilterInput
+  ): Promise<Result<Event[], EventError>>;
 }
 
 class EventService implements IEventService {
@@ -32,7 +63,6 @@ class EventService implements IEventService {
     const title = input.title.trim();
     const description = input.description.trim();
 
-    // Validation
     if (!title) {
       return Err(ValidationError("Title is required."));
     }
@@ -53,24 +83,22 @@ class EventService implements IEventService {
       );
     }
 
-    // Create event
     const event: Event = {
       id: crypto.randomUUID(),
       title,
       description,
       location: input.location,
       category: input.category,
-      status: 'draft',
+      status: "draft",
       capacity: input.capacity,
       startDatetime: input.startTime,
       endDatetime: input.endTime,
       organizerId: input.organizerId,
       createdAt: new Date(),
       updatedAt: new Date(),
-    }
+    };
 
     const created = await this.repo.create(event);
-
     return Ok(created);
   }
 
@@ -78,14 +106,12 @@ class EventService implements IEventService {
     eventId: string,
     actingUserId?: string
   ): Promise<Result<Event, EventError>> {
-
     const event = await this.repo.getEventById(eventId);
 
     if (!event) {
       return Err(NotFoundError("Event not found."));
     }
 
-    // Draft visibility rule
     if (event.status === "draft" && event.organizerId !== actingUserId) {
       return Err(NotFoundError("Event not found."));
     }
@@ -98,39 +124,59 @@ class EventService implements IEventService {
     input: Omit<CreateEventInput, "organizerId">,
     actingUserId: string
   ): Promise<Result<Event, EventError>> {
-    const event = await this.repo.getEventById(eventId)
-  
+    const event = await this.repo.getEventById(eventId);
+
     if (!event) {
-      return Err(NotFoundError("Event not found."))
+      return Err(NotFoundError("Event not found."));
     }
-  
+
     if (event.organizerId !== actingUserId) {
-      return Err(ValidationError("Not authorized to edit this event."))
+      return Err(ValidationError("Not authorized to edit this event."));
     }
-  
+
     if (event.status === "cancelled" || event.status === "past") {
-      return Err(ValidationError("Cannot edit this event."))
+      return Err(ValidationError("Cannot edit this event."));
     }
-  
+
+<<<<<<< task/event-edit-test
+    if (
+        !input ||
+        typeof input !== "object" ||
+        typeof input?.title !== "string" ||
+        typeof input?.description !== "string" ||
+        !(input?.startTime instanceof Date) ||
+        Number.isNaN(input?.startTime?.getTime?.()) ||
+        !(input?.endTime instanceof Date) ||
+        Number.isNaN(input?.endTime?.getTime?.()) ||
+        typeof input?.capacity !== "number" ||
+        Number.isNaN(input?.capacity)
+    ) {
+        return Err(NotFoundError("Event not found."));
+      }
+
     const title = input.title.trim()
     const description = input.description.trim()
-  
+=======
+    const title = input.title.trim();
+    const description = input.description.trim();
+>>>>>>> dev
+
     if (!title) {
-      return Err(ValidationError("Title is required."))
+      return Err(ValidationError("Title is required."));
     }
-  
+
     if (!description) {
-      return Err(ValidationError("Description is required."))
+      return Err(ValidationError("Description is required."));
     }
-  
+
     if (input.endTime <= input.startTime) {
-      return Err(ValidationError("End time must be after start time."))
+      return Err(ValidationError("End time must be after start time."));
     }
-  
+
     if (input.capacity <= 0) {
-      return Err(ValidationError("Capacity must be greater than 0."))
+      return Err(ValidationError("Capacity must be greater than 0."));
     }
-  
+
     const updated: Event = {
       ...event,
       title,
@@ -141,11 +187,126 @@ class EventService implements IEventService {
       startDatetime: input.startTime,
       endDatetime: input.endTime,
       updatedAt: new Date(),
+    };
+
+    const saved = await this.repo.update(updated);
+    return Ok(saved);
+  }
+
+  async listPublishedEvents(
+    filters: EventFilterInput
+  ): Promise<Result<Event[], EventError>> {
+    const category = filters.category?.trim();
+    const timeframe = filters.timeframe ?? "all";
+
+    if (timeframe !== "all" && timeframe !== "week" && timeframe !== "weekend") {
+      return Err(ValidationError("Invalid timeframe value."));
     }
-  
-    const saved = await this.repo.update(updated)
-  
-    return Ok(saved)
+
+    const now = new Date();
+    const allEvents = await this.repo.getAll();
+
+    let filtered = allEvents.filter((event) => {
+      return event.status === "published" && event.startDatetime >= now;
+    });
+
+    if (category) {
+      filtered = filtered.filter((event) => event.category === category);
+    }
+
+    if (timeframe === "week") {
+      const endOfWeek = new Date(now);
+      endOfWeek.setDate(now.getDate() + 7);
+
+      filtered = filtered.filter((event) => {
+        return event.startDatetime <= endOfWeek;
+      });
+    }
+
+    if (timeframe === "weekend") {
+      filtered = filtered.filter((event) => {
+        const day = event.startDatetime.getDay();
+        return day === 0 || day === 6;
+      });
+    }
+
+    return Ok(filtered);
+  }
+
+  private canModify(event: Event, userId: string, userRole: UserRole): boolean {
+    return userRole === "admin" || event.organizerId === userId;
+  }
+
+  async publishEvent(
+    eventId: string,
+    userId: string,
+    userRole: UserRole
+  ): Promise<Result<Event, EventError>> {
+    const event = await this.repo.getEventById(eventId);
+
+    if (!event) {
+      return Err(NotFoundError("Event not found."));
+    }
+
+    if (!this.canModify(event, userId, userRole)) {
+      return Err(
+        NotAuthorizedError(
+          "Only the organizer or an admin can publish this event."
+        )
+      );
+    }
+
+    if (event.status !== "draft") {
+      return Err(
+        InvalidStateError(
+          `Cannot publish an event with status "${event.status}".`
+        )
+      );
+    }
+
+    const updated = await this.repo.update({
+      ...event,
+      status: "published",
+      updatedAt: new Date(),
+    });
+
+    return Ok(updated);
+  }
+
+  async cancelEvent(
+    eventId: string,
+    userId: string,
+    userRole: UserRole
+  ): Promise<Result<Event, EventError>> {
+    const event = await this.repo.getEventById(eventId);
+
+    if (!event) {
+      return Err(NotFoundError("Event not found."));
+    }
+
+    if (!this.canModify(event, userId, userRole)) {
+      return Err(
+        NotAuthorizedError(
+          "Only the organizer or an admin can cancel this event."
+        )
+      );
+    }
+
+    if (event.status !== "published") {
+      return Err(
+        InvalidStateError(
+          `Cannot cancel an event with status "${event.status}".`
+        )
+      );
+    }
+
+    const updated = await this.repo.update({
+      ...event,
+      status: "cancelled",
+      updatedAt: new Date(),
+    });
+
+    return Ok(updated);
   }
 }
 
