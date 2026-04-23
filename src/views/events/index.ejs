@@ -2,21 +2,27 @@
   <h1>Events</h1>
 
   <form
+    method="get"
+    action="/events"
     hx-get="/events"
     hx-target="#event-list"
     hx-swap="innerHTML"
+    hx-push-url="true"
   >
 
     <input
       type="text"
       name="q"
       placeholder="Search events..."
-      oninput="this.form.requestSubmit()"
+      hx-trigger="input changed delay:300ms, search"
+      hx-get="/events"
+      hx-target="#event-list"
+      hx-swap="innerHTML"
+      hx-push-url="true"
     />
 
-  
     <label for="category">Category:</label>
-    <select id="category" name="category" onchange="this.form.requestSubmit()">
+    <select id="category" name="category">
       <option value="">All</option>
       <option value="Tech">Tech</option>
       <option value="Social">Social</option>
@@ -25,13 +31,14 @@
 
 
     <label for="timeframe">Timeframe:</label>
-    <select id="timeframe" name="timeframe" onchange="this.form.requestSubmit()">
+    <select id="timeframe" name="timeframe">
       <option value="">All upcoming</option>
       <option value="week">This week</option>
       <option value="weekend">This weekend</option>
     </select>
-  </form>
 
+    <button type="submit">Apply</button>
+  </form>
 
   <div id="event-list">
     <%- include("partials/event-list", { events }) %>
