@@ -37,7 +37,7 @@ export function createComposedApp(logger?: ILoggingService): IApp {
   );
 
   // Event wiring
-  const eventRepo = new InMemoryEventRepository();
+  const eventRepo = new PrismaEventRepository();
   const eventService = CreateEventService(eventRepo);
 
   // RSVP wiring (NEW)
