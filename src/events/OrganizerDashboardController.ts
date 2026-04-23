@@ -17,6 +17,15 @@ export class OrganizerDashboardController {
       return;
     }
 
+    const isHtmx = req.get("HX-Request") === "true";
+    if (isHtmx) {
+      res.render("events/partials/dashboard-sections", {
+        dashboard: result.value,
+        layout: false,
+      });
+      return;
+    }
+
     res.render("events/organizer-dashboard", {
       session: browserSession,
       dashboard: result.value,
