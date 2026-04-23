@@ -8,6 +8,21 @@
   hx-swap="outerHTML"
   hx-push-url="true"
 >
+  <input
+    type="text"
+    name="q"
+    value="<%= filters.q ?? '' %>"
+    placeholder="Search events..."
+    class="border rounded px-3 py-2 text-sm w-56"
+    hx-get="/events"
+    hx-trigger="input changed delay:300ms"
+    hx-target="#event-list"
+    hx-select="#event-list"
+    hx-swap="outerHTML"
+    hx-include="closest form"
+    hx-push-url="true"
+  />
+
   <select name="category" class="border rounded px-3 py-2 text-sm">
     <option value="">All Categories</option>
     <option value="Tech" <%= filters.category === "Tech" ? "selected" : "" %>>Tech</option>
