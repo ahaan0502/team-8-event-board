@@ -7,6 +7,7 @@ import {
   InvalidCapacityError,
   NotAuthorizedError,
   InvalidStateError,
+  InvalidSearchError,
 } from "./errors";
 import { Event } from "./event";
 import type { EventRepository } from "./eventRepository";
@@ -26,6 +27,7 @@ export interface CreateEventInput {
 export interface EventFilterInput {
   category?: string;
   timeframe?: "all" | "week" | "weekend";
+  q?: string;
 }
 
 export interface IEventService {
@@ -223,6 +225,21 @@ class EventService implements IEventService {
         const day = event.startDatetime.getDay();
         return day === 0 || day === 6;
       });
+    }
+
+    const q = filters.q?.trim() ?? "";
+
+    if (q.length > 200) {
+      return Err(InvalidSearchError("Search query must be 200 characters or fewer."));
+    }
+
+    if (q) {
+      const lower = q.toLowerCase();
+      filtered = filtered.filter((event) =>
+        event.title.toLowerCase().includes(lower) ||
+        event.description.toLowerCase().includes(lower) ||
+        event.location.toLowerCase().includes(lower)
+      );
     }
 
     return Ok(filtered);
