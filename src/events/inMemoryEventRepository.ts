@@ -66,13 +66,17 @@ export class InMemoryEventRepository implements EventRepository {
   }
 
   async getEventsByIds(eventIds: string[]): Promise<Event[]> {
-    const idSet = new Set(eventIds);
-    return Array.from(events.values()).filter(event => idSet.has(event.id));
+    const idSet = new Set(eventIds)
+    return Array.from(events.values()).filter((event) => idSet.has(event.id))
   }
-  
+
   async getEventsByOrganizerId(organizerId: string): Promise<Event[]> {
     return Array.from(events.values()).filter(
-      event => event.organizerId === organizerId
-    );
+      (event) => event.organizerId === organizerId
+    )
+  }
+
+  async getAll(): Promise<Event[]> {
+    return Array.from(events.values())
   }
 }
