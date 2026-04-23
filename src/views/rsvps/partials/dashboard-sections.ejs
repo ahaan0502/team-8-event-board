@@ -1,0 +1,19 @@
+<h2>Upcoming</h2>
+<% if (dashboard.upcoming.length === 0) { %>
+  <p>No upcoming RSVPs.</p>
+<% } %>
+<% dashboard.upcoming.forEach(item => { %>
+  <div>
+    <strong><%= item.event.title %></strong>
+  </div>
+<% }) %>
+
+<h2>Past/Cancelled</h2>
+<% if (dashboard.pastCancelled.length === 0) { %>
+  <p>No past or cancelled RSVPs.</p>
+<% } %>
+<% dashboard.pastCancelled.forEach(item => { %>
+  <div>
+    <strong><%= item.event.title %></strong>
+  </div>
+<% }) %>
