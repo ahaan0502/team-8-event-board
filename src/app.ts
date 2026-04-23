@@ -286,7 +286,7 @@ this.app.post(
 this.app.get(
   "/my-rsvps",
   asyncHandler(async (req, res) => {
-    if (!this.requireAuthenticated(req, res)) {
+    if (!this.requireRole(req, res, ["user"], "Only members can access My RSVPs.")) {
       return;
     }
 
