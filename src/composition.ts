@@ -20,6 +20,7 @@ import { CreateLoggingService } from "./service/LoggingService";
 import type { ILoggingService } from "./service/LoggingService";
 import { CreateRSVPRepository } from "./events/rsvpRepository";
 import { CreateRSVPService } from "./events/rsvpService";
+import { PrismaEventRepository } from "./events/prismaEventRepository";
 
 export function createComposedApp(logger?: ILoggingService): IApp {
   const resolvedLogger = logger ?? CreateLoggingService();
@@ -36,7 +37,7 @@ export function createComposedApp(logger?: ILoggingService): IApp {
   );
 
   // Event wiring
-  const eventRepo = new InMemoryEventRepository();
+  const eventRepo = new PrismaEventRepository();
   const eventService = CreateEventService(eventRepo);
 
   // RSVP wiring (NEW)
