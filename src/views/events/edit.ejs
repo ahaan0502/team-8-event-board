@@ -31,7 +31,7 @@
       <input
         type="datetime-local"
         name="startTime"
-        value="<%= new Date(event.startDatetime).toISOString().slice(0,16) %>"
+        value="<%= event.startDatetime ? new Date(event.startDatetime).toISOString().slice(0,16) : '' %>"
         required
       />
     </div>
@@ -41,7 +41,7 @@
       <input
         type="datetime-local"
         name="endTime"
-        value="<%= new Date(event.endDatetime).toISOString().slice(0,16) %>"
+        value="<%= event.endDatetime ? new Date(event.endDatetime).toISOString().slice(0,16) : '' %>"
         required
       />
     </div>

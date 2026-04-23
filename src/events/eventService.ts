@@ -138,8 +138,28 @@ class EventService implements IEventService {
       return Err(ValidationError("Cannot edit this event."));
     }
 
+<<<<<<< task/event-edit-test
+    if (
+        !input ||
+        typeof input !== "object" ||
+        typeof input?.title !== "string" ||
+        typeof input?.description !== "string" ||
+        !(input?.startTime instanceof Date) ||
+        Number.isNaN(input?.startTime?.getTime?.()) ||
+        !(input?.endTime instanceof Date) ||
+        Number.isNaN(input?.endTime?.getTime?.()) ||
+        typeof input?.capacity !== "number" ||
+        Number.isNaN(input?.capacity)
+    ) {
+        return Err(NotFoundError("Event not found."));
+      }
+
+    const title = input.title.trim()
+    const description = input.description.trim()
+=======
     const title = input.title.trim();
     const description = input.description.trim();
+>>>>>>> dev
 
     if (!title) {
       return Err(ValidationError("Title is required."));
