@@ -17,6 +17,13 @@ export interface IEventController {
     category?: string,
     timeframe?: "all" | "week" | "weekend"
   ): Promise<void>;
+
+  searchEvents(
+    res: Response,
+    store: AppSessionStore,
+    query?: string
+  ): Promise<void>;
+
   showCreateEvent(res: Response, session: IAppBrowserSession, pageError?: string | null): Promise<void>;
   createEventFromForm(res: Response, input: Omit<CreateEventInput, "organizerId">, store: AppSessionStore): Promise<void>;
   getEventDetail(res: Response, eventId: string, store: AppSessionStore): Promise<void>;
@@ -70,6 +77,50 @@ class EventController implements IEventController {
     if (result.ok === false) {
       res.status(400).render("partials/error", {
         message: result.value.message,
+        layout: false,
+      });
+      return;
+    }
+
+    const isHtmx = res.req?.get("HX-Request") === "true";
+
+    if (isHtmx) {
+      res.render("events/partials/event-list", {
+        events: result.value,
+        layout: false,
+      });
+      return;
+    }
+
+    res.render("events/index", {
+      events: result.value,
+      session,
+      pageError: null,
+    });
+  }
+
+  async searchEvents(
+    res: Response,
+    store: AppSessionStore,
+    query?: string
+  ): Promise<void> {
+    const session = touchAppSession(store);
+
+    const result = await this.service.searchEvents(query);
+
+    if (result.ok === false) {
+      res.status(400).render("partials/error", {
+        message: result.value.message,
+        layout: false,
+      });
+      return;
+    }
+
+    const isHtmx = res.req?.get("HX-Request") === "true";
+
+    if (isHtmx) {
+      res.render("events/partials/event-list", {
+        events: result.value,
         layout: false,
       });
       return;

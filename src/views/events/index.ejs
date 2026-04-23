@@ -6,6 +6,15 @@
     hx-target="#event-list"
     hx-swap="innerHTML"
   >
+
+    <input
+      type="text"
+      name="q"
+      placeholder="Search events..."
+      oninput="this.form.requestSubmit()"
+    />
+
+  
     <label for="category">Category:</label>
     <select id="category" name="category" onchange="this.form.requestSubmit()">
       <option value="">All</option>
@@ -14,6 +23,7 @@
       <option value="Entertainment">Entertainment</option>
     </select>
 
+
     <label for="timeframe">Timeframe:</label>
     <select id="timeframe" name="timeframe" onchange="this.form.requestSubmit()">
       <option value="">All upcoming</option>
@@ -21,6 +31,7 @@
       <option value="weekend">This weekend</option>
     </select>
   </form>
+
 
   <div id="event-list">
     <%- include("partials/event-list", { events }) %>

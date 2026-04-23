@@ -52,6 +52,7 @@ export interface IEventService {
   listPublishedEvents(
     filters: EventFilterInput
   ): Promise<Result<Event[], EventError>>;
+  searchEvents(query?: string): Promise<any>;
 }
 
 class EventService implements IEventService {
@@ -216,7 +217,29 @@ class EventService implements IEventService {
   private canModify(event: Event, userId: string, userRole: UserRole): boolean {
     return userRole === "admin" || event.organizerId === userId;
   }
+  async searchEvents(query?: string) {
+  const events = await this.repo.getAll();
 
+  // only published + upcoming (same rule as filter)
+  let filtered = events.filter(
+    (e) => e.status === "published" && e.startDatetime >= new Date()
+  );
+
+  if (!query || query.trim() === "") {
+    return { ok: true, value: filtered };
+  }
+
+  const q = query.toLowerCase();
+
+  filtered = filtered.filter(
+    (e) =>
+      e.title.toLowerCase().includes(q) ||
+      e.description.toLowerCase().includes(q) ||
+      e.location.toLowerCase().includes(q)
+  );
+
+  return { ok: true, value: filtered };
+}
   async publishEvent(
     eventId: string,
     userId: string,

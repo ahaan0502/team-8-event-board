@@ -232,26 +232,38 @@ class ExpressApp implements IApp {
     );
 
     this.app.get(
-      "/events",
-      asyncHandler(async (req, res) => {
-        if (!this.requireAuthenticated(req, res)) {
-          return;
-        }
+  "/events",
+  asyncHandler(async (req, res) => {
+    if (!this.requireAuthenticated(req, res)) {
+      return;
+    }
 
-        const category =
-          typeof req.query.category === "string" ? req.query.category : undefined;
+    const category =
+      typeof req.query.category === "string" ? req.query.category : undefined;
 
-        const timeframe =
-          typeof req.query.timeframe === "string" ? req.query.timeframe : undefined;
+    const timeframe =
+      typeof req.query.timeframe === "string" ? req.query.timeframe : undefined;
 
-        await this.eventController.listEvents(
-  res,
-  sessionStore(req),
-  category,
-  timeframe as "all" | "week" | "weekend" | undefined
-);
-      }),
+    const query =
+      typeof req.query.q === "string" ? req.query.q : undefined;
+
+    if (query) {
+      await this.eventController.searchEvents(
+        res,
+        sessionStore(req),
+        query
+      );
+      return;
+    }
+
+    await this.eventController.listEvents(
+      res,
+      sessionStore(req),
+      category,
+      timeframe as "all" | "week" | "weekend" | undefined
     );
+  }),
+);
 
     this.app.get(
       "/events/new",
