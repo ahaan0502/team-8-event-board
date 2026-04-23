@@ -138,7 +138,6 @@ class EventService implements IEventService {
       return Err(ValidationError("Cannot edit this event."));
     }
 
-<<<<<<< task/event-edit-test
     if (
         !input ||
         typeof input !== "object" ||
@@ -156,10 +155,6 @@ class EventService implements IEventService {
 
     const title = input.title.trim()
     const description = input.description.trim()
-=======
-    const title = input.title.trim();
-    const description = input.description.trim();
->>>>>>> dev
 
     if (!title) {
       return Err(ValidationError("Title is required."));
