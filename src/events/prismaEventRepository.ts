@@ -98,15 +98,18 @@ export class PrismaEventRepository implements EventRepository {
     return events.map(toDomain);
   }
 
-  async getEventById(): Promise<Event | null> {
-    throw new Error("Not implemented yet");
+  async getEventById(eventId: string): Promise<Event | null> {
+    const event = await prisma.event.findUnique({ where: { id: eventId } });
+    return event ? toDomain(event) : null;
   }
 
-  async getEventsByIds(): Promise<Event[]> {
-    throw new Error("Not implemented yet");
+  async getEventsByIds(eventIds: string[]): Promise<Event[]> {
+    const events = await prisma.event.findMany({ where: { id: { in: eventIds } } });
+    return events.map(toDomain);
   }
 
-  async getEventsByOrganizerId(): Promise<Event[]> {
-    throw new Error("Not implemented yet");
+  async getEventsByOrganizerId(organizerId: string): Promise<Event[]> {
+    const events = await prisma.event.findMany({ where: { organizerId } });
+    return events.map(toDomain);
   }
 }
