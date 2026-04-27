@@ -229,7 +229,9 @@ class EventService implements IEventService {
     if (filters.query?.trim()) {
       const q = filters.query.trim().toLowerCase();
       filtered = filtered.filter((event) =>
-        event.title.toLowerCase().includes(q)
+        event.title.toLowerCase().includes(q) ||
+        event.description.toLowerCase().includes(q) ||
+        event.location.toLowerCase().includes(q)
       );
     }
 
