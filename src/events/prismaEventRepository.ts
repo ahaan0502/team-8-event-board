@@ -1,11 +1,11 @@
+import "dotenv/config";
 import { PrismaClient, EventStatus } from "@prisma/client";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
-import { EventRepository } from "./eventRepository";
+import { EventRepository, EventRepoFilter } from "./eventRepository";
 import { Event } from "./event";
-import path from "path";
 
-const dbPath = path.resolve(process.cwd(), "prisma/dev.db");
-const adapter = new PrismaBetterSqlite3({ url: dbPath });
+const dbUrl = process.env.DATABASE_URL ?? "file:./prisma/dev.db";
+const adapter = new PrismaBetterSqlite3({ url: dbUrl });
 const prisma = new PrismaClient({ adapter });
 
 function toDomain(event: any): Event {
@@ -74,8 +74,27 @@ export class PrismaEventRepository implements EventRepository {
     return toDomain(updated);
   }
 
-  async getAll(): Promise<Event[]> {
-    const events = await prisma.event.findMany();
+  async getAll(filters?: EventRepoFilter): Promise<Event[]> {
+    const where: any = {};
+
+    if (filters?.status) where.status = filters.status as EventStatus;
+    if (filters?.category) where.category = filters.category;
+    if (filters?.startAfter || filters?.startBefore) {
+      where.startDatetime = {
+        ...(filters.startAfter && { gte: filters.startAfter }),
+        ...(filters.startBefore && { lte: filters.startBefore }),
+      };
+    }
+    if (filters?.query?.trim()) {
+      const q = filters.query.trim();
+      where.OR = [
+        { title: { contains: q } },
+        { description: { contains: q } },
+        { location: { contains: q } },
+      ];
+    }
+
+    const events = await prisma.event.findMany({ where });
     return events.map(toDomain);
   }
 

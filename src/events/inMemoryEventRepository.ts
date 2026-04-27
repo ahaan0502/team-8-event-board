@@ -1,5 +1,5 @@
 import { Event } from './event'
-import { EventRepository } from './eventRepository'
+import { EventRepository, EventRepoFilter } from './eventRepository'
 
 const sampleEvents: Event[] = [
   {
@@ -76,7 +76,22 @@ export class InMemoryEventRepository implements EventRepository {
     )
   }
 
-  async getAll(): Promise<Event[]> {
-    return Array.from(events.values())
+  async getAll(filters?: EventRepoFilter): Promise<Event[]> {
+    let results = Array.from(events.values());
+
+    if (filters?.status) results = results.filter(e => e.status === filters.status);
+    if (filters?.category) results = results.filter(e => e.category === filters.category);
+    if (filters?.startAfter) results = results.filter(e => e.startDatetime >= filters.startAfter!);
+    if (filters?.startBefore) results = results.filter(e => e.startDatetime <= filters.startBefore!);
+    if (filters?.query?.trim()) {
+      const q = filters.query.trim().toLowerCase();
+      results = results.filter(e =>
+        e.title.toLowerCase().includes(q) ||
+        e.description.toLowerCase().includes(q) ||
+        e.location.toLowerCase().includes(q)
+      );
+    }
+
+    return results;
   }
 }

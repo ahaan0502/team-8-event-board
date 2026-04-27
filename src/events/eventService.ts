@@ -205,42 +205,34 @@ class EventService implements IEventService {
     }
 
     const now = new Date();
-    const allEvents = await this.repo.getAll();
 
-    let filtered = allEvents.filter((event) => {
-      return event.status === "published" && event.startDatetime >= now;
-    });
+    const repoFilters: {
+      status: string;
+      startAfter: Date;
+      startBefore?: Date;
+      category?: string;
+      query?: string;
+    } = { status: "published", startAfter: now };
 
-    if (category) {
-      filtered = filtered.filter((event) => event.category === category);
-    }
+    if (category) repoFilters.category = category;
+    if (filters.query?.trim()) repoFilters.query = filters.query.trim();
 
     if (timeframe === "week") {
       const endOfWeek = new Date(now);
       endOfWeek.setDate(now.getDate() + 7);
-
-      filtered = filtered.filter((event) => {
-        return event.startDatetime <= endOfWeek;
-      });
+      repoFilters.startBefore = endOfWeek;
     }
 
+    let results = await this.repo.getAll(repoFilters);
+
     if (timeframe === "weekend") {
-      filtered = filtered.filter((event) => {
+      results = results.filter((event) => {
         const day = event.startDatetime.getDay();
         return day === 0 || day === 6;
       });
     }
 
-    if (filters.query?.trim()) {
-      const q = filters.query.trim().toLowerCase();
-      filtered = filtered.filter((event) =>
-        event.title.toLowerCase().includes(q) ||
-        event.description.toLowerCase().includes(q) ||
-        event.location.toLowerCase().includes(q)
-      );
-    }
-
-    return Ok(filtered);
+    return Ok(results);
   }
 
   private canModify(event: Event, userId: string, userRole: UserRole): boolean {
