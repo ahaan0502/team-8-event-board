@@ -199,24 +199,23 @@ class EventService implements IEventService {
     }
 
     const now = new Date();
-    const allEvents = await this.repo.getAll();
 
-    let filtered = allEvents.filter((event) => {
-      return event.status === "published" && event.startDatetime >= now;
-    });
+    const repoFilters: {
+      status: string;
+      startAfter: Date;
+      startBefore?: Date;
+      category?: string;
+    } = { status: "published", startAfter: now };
 
-    if (category) {
-      filtered = filtered.filter((event) => event.category === category);
-    }
+    if (category) repoFilters.category = category;
 
     if (timeframe === "week") {
       const endOfWeek = new Date(now);
       endOfWeek.setDate(now.getDate() + 7);
-
-      filtered = filtered.filter((event) => {
-        return event.startDatetime <= endOfWeek;
-      });
+      repoFilters.startBefore = endOfWeek;
     }
+
+    let filtered = await this.repo.getAll(repoFilters);
 
     if (timeframe === "weekend") {
       filtered = filtered.filter((event) => {

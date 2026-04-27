@@ -76,7 +76,17 @@ export class InMemoryEventRepository implements EventRepository {
     )
   }
 
-  async getAll(): Promise<Event[]> {
-    return Array.from(events.values())
+  async getAll(filters?: {
+    status?: string;
+    category?: string;
+    startAfter?: Date;
+    startBefore?: Date;
+  }): Promise<Event[]> {
+    let result = Array.from(events.values());
+    if (filters?.status) result = result.filter((e) => e.status === filters.status);
+    if (filters?.category) result = result.filter((e) => e.category === filters.category);
+    if (filters?.startAfter) result = result.filter((e) => e.startDatetime >= filters.startAfter!);
+    if (filters?.startBefore) result = result.filter((e) => e.startDatetime <= filters.startBefore!);
+    return result;
   }
 }
