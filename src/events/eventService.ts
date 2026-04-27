@@ -26,6 +26,7 @@ export interface CreateEventInput {
 export interface EventFilterInput {
   category?: string;
   timeframe?: "all" | "week" | "weekend";
+  query?: string;
 }
 
 export interface IEventService {
