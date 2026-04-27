@@ -7,6 +7,7 @@ import {
   InvalidCapacityError,
   NotAuthorizedError,
   InvalidStateError,
+  InvalidSearchError,
 } from "./errors";
 import { Event } from "./event";
 import type { EventRepository } from "./eventRepository";
@@ -197,6 +198,10 @@ class EventService implements IEventService {
 
     if (timeframe !== "all" && timeframe !== "week" && timeframe !== "weekend") {
       return Err(ValidationError("Invalid timeframe value."));
+    }
+
+    if (filters.query !== undefined && filters.query.length > 200) {
+      return Err(InvalidSearchError("Search query must be 200 characters or fewer."));
     }
 
     const now = new Date();
