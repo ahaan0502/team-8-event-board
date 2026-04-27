@@ -1,8 +1,12 @@
 import { PrismaClient, EventStatus } from "@prisma/client";
+import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import { EventRepository } from "./eventRepository";
 import { Event } from "./event";
+import path from "path";
 
-const prisma = new PrismaClient();
+const dbPath = path.resolve(process.cwd(), "prisma/dev.db");
+const adapter = new PrismaBetterSqlite3({ url: dbPath });
+const prisma = new PrismaClient({ adapter });
 
 function toDomain(event: any): Event {
   return {
