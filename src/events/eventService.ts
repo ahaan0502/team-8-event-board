@@ -226,6 +226,13 @@ class EventService implements IEventService {
       });
     }
 
+    if (filters.query?.trim()) {
+      const q = filters.query.trim().toLowerCase();
+      filtered = filtered.filter((event) =>
+        event.title.toLowerCase().includes(q)
+      );
+    }
+
     return Ok(filtered);
   }
 
