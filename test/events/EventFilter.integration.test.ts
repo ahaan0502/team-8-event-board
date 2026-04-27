@@ -48,7 +48,7 @@ describe("GET /events", () => {
   it("returns empty list message when no events match", async () => {
     const res = await agent.get("/events?category=Nonexistent");
     expect(res.status).toBe(200);
-    expect(res.text).toContain("No upcoming events match your filters");
+    expect(res.text).toContain("No upcoming events match your search or filters.");
   });
 
   it("returns partial HTML for HTMX requests", async () => {
