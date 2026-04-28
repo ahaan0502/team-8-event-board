@@ -31,6 +31,9 @@ class OrganizerDashboardService implements IOrganizerDashboardService {
     organizerId: string
   ): Promise<Result<OrganizerDashboard, never>> {
     const events = await this.eventRepository.getEventsByOrganizerId(organizerId);
+    const goingCounts = this.rsvpRepository.countGoingByEventIds
+      ? await this.rsvpRepository.countGoingByEventIds(events.map((event) => event.id))
+      : null;
 
     const dashboard: OrganizerDashboard = {
       draft: [],
@@ -40,8 +43,11 @@ class OrganizerDashboardService implements IOrganizerDashboardService {
     };
 
     for (const event of events) {
-      const rsvps = await this.rsvpRepository.findByEventId(event.id);
-      const attendeeCount = rsvps.filter((rsvp) => rsvp.status === "going").length;
+      const attendeeCount = goingCounts
+        ? (goingCounts.get(event.id) ?? 0)
+        : (await this.rsvpRepository.findByEventId(event.id)).filter(
+            (rsvp) => rsvp.status === "going"
+          ).length;
 
       const item: OrganizerDashboardItem = {
         event,
