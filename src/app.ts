@@ -339,6 +339,25 @@ this.app.get(
 );
     
 this.app.get(
+  "/events",
+  asyncHandler(async (req, res) => {
+    if (!this.requireAuthenticated(req, res)) {
+      return;
+    }
+
+    const rawCategory = typeof req.query.category === "string" ? req.query.category : undefined;
+    const rawTimeframe = typeof req.query.timeframe === "string" ? req.query.timeframe : undefined;
+    const timeframe = rawTimeframe as "all" | "week" | "weekend" | undefined;
+
+    await this.eventController.listEvents(
+      res,
+      { category: rawCategory, timeframe },
+      sessionStore(req)
+    );
+  })
+);
+
+this.app.get(
   "/events/:id/edit",
   asyncHandler(async (req, res) => {
     if (!this.requireAuthenticated(req, res)) {
