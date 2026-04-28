@@ -93,17 +93,28 @@ export class PrismaEventRepository implements EventRepository {
   }
 
   async getEventById(eventId: string): Promise<Event | null> {
-    const event = await prisma.event.findUnique({ where: { id: eventId } });
+    const event = await prisma.event.findUnique({
+        where: { id: eventId },
+    });
+
     return event ? toDomain(event) : null;
   }
 
   async getEventsByIds(eventIds: string[]): Promise<Event[]> {
-    const events = await prisma.event.findMany({ where: { id: { in: eventIds } } });
+    const events = await prisma.event.findMany({
+        where: {
+        id: { in: eventIds },
+        },
+    });
+
     return events.map(toDomain);
   }
 
   async getEventsByOrganizerId(organizerId: string): Promise<Event[]> {
-    const events = await prisma.event.findMany({ where: { organizerId } });
+    const events = await prisma.event.findMany({
+        where: { organizerId },
+    });
+
     return events.map(toDomain);
   }
 }
