@@ -11,7 +11,7 @@ import { CreateEventController } from "./events/eventController";
 import { CreateEventService } from "./events/eventService";
 import { CreateOrganizerDashboardService } from "./events/OrganizerDashboardService";
 import { OrganizerDashboardController } from "./events/OrganizerDashboardController";
-import { InMemoryRSVPRepository } from "./rsvps/InMemoryRSVPRepository";
+import { PrismaRSVPDashboardRepository } from "./rsvps/PrismaRSVPDashboardRepository";
 import { RSVPDashboardController } from "./rsvps/RSVPDashboardController";
 import { CreateRSVPDashboardService } from "./rsvps/RSVPDashboardService";
 import { CreateLoggingService } from "./service/LoggingService";
@@ -53,7 +53,7 @@ export function createComposedApp(logger?: ILoggingService): IApp {
   const attendeeController = CreateAttendeeController(attendeeService, resolvedLogger);
 
   // RSVP dashboard wiring
-  const dashboardRsvpRepo = new InMemoryRSVPRepository();
+  const dashboardRsvpRepo = new PrismaRSVPDashboardRepository();
   const rsvpDashboardService = CreateRSVPDashboardService(
   dashboardRsvpRepo,
   eventRepo

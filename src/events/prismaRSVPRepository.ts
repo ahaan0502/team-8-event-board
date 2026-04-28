@@ -40,11 +40,11 @@ export class PrismaRSVPRepository implements RSVPRepository {
   async create(rsvp: RSVP): Promise<RSVP> {
     const row = await prisma.rsvp.create({
       data: {
-        id: rsvp.id,
         eventId: rsvp.eventId,
         userId: rsvp.userId,
         status: rsvp.status,
         createdAt: rsvp.createdAt,
+        ...(rsvp.id ? { id: rsvp.id } : {}),
       },
     });
     return toDomain(row);
