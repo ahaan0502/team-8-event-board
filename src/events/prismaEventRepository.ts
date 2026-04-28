@@ -47,6 +47,7 @@ export class PrismaEventRepository implements EventRepository {
         updatedAt: event.updatedAt,
       },
     });
+
     return toDomain(created);
   }
 
@@ -65,6 +66,7 @@ export class PrismaEventRepository implements EventRepository {
         updatedAt: event.updatedAt,
       },
     });
+
     return toDomain(updated);
   }
 
@@ -73,6 +75,7 @@ export class PrismaEventRepository implements EventRepository {
 
     if (filters?.status) where.status = filters.status as EventStatus;
     if (filters?.category) where.category = filters.category;
+
     if (filters?.startAfter || filters?.startBefore) {
       where.startDatetime = {
         ...(filters.startAfter && { gte: filters.startAfter }),
@@ -80,18 +83,6 @@ export class PrismaEventRepository implements EventRepository {
       };
     }
 
-    let events = await prisma.event.findMany({
-      where,
-      orderBy: {
-        startDatetime: "asc",
-      },
-    });
-
-    if (filters?.weekendOnly) {
-      events = events.filter((e) => {
-        const day = e.startDatetime.getDay();
-        return day === 0 || day === 6;
-      });
     if (filters?.query?.trim()) {
       const q = filters.query.trim();
       where.OR = [
@@ -101,13 +92,24 @@ export class PrismaEventRepository implements EventRepository {
       ];
     }
 
-    const events = await prisma.event.findMany({ where });
+    let events = await prisma.event.findMany({
+      where,
+      orderBy: { startDatetime: "asc" },
+    });
+
+    if ((filters as any)?.weekendOnly) {
+      events = events.filter((e) => {
+        const day = e.startDatetime.getDay();
+        return day === 0 || day === 6;
+      });
+    }
+
     return events.map(toDomain);
   }
 
   async getEventById(eventId: string): Promise<Event | null> {
     const event = await prisma.event.findUnique({
-        where: { id: eventId },
+      where: { id: eventId },
     });
 
     return event ? toDomain(event) : null;
@@ -115,9 +117,9 @@ export class PrismaEventRepository implements EventRepository {
 
   async getEventsByIds(eventIds: string[]): Promise<Event[]> {
     const events = await prisma.event.findMany({
-        where: {
+      where: {
         id: { in: eventIds },
-        },
+      },
     });
 
     return events.map(toDomain);
@@ -125,7 +127,7 @@ export class PrismaEventRepository implements EventRepository {
 
   async getEventsByOrganizerId(organizerId: string): Promise<Event[]> {
     const events = await prisma.event.findMany({
-        where: { organizerId },
+      where: { organizerId },
     });
 
     return events.map(toDomain);
