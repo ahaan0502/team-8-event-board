@@ -1,5 +1,5 @@
 import type { RSVP } from './RSVP'
-import type { RSVPRepository } from './RSVPRepository'
+import type { RSVPRepository } from '../events/rsvpRepository'
 
 const rsvps = new Map<string, RSVP>()
 
