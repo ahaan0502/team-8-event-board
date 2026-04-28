@@ -50,6 +50,22 @@ class InMemoryRSVPRepository implements RSVPRepository {
     this.rsvps.set(rsvp.id, rsvp);
     return rsvp;
   }
+
+  async findByUserId(userId: string): Promise<RSVP[]> {
+    return Array.from(this.rsvps.values()).filter(
+      (r) => r.userId === userId
+    );
+  }
+
+  async findByEventId(eventId: string): Promise<RSVP[]> {
+    return Array.from(this.rsvps.values()).filter(
+      (r) => r.eventId === eventId
+    );
+  }
+
+  async save(rsvp: RSVP): Promise<void> {
+    this.rsvps.set(rsvp.id, rsvp);
+  }
 }
 
 export function CreateRSVPRepository(): RSVPRepository {
