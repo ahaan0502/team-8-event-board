@@ -9,7 +9,7 @@ import {
   InvalidStateError,
 } from "./errors";
 import { Event } from "./event";
-import type { EventRepository } from "./eventRepository";
+import type { EventRepository, EventRepoFilter } from "./eventRepository";
 import type { UserRole } from "../auth/User";
 
 export interface CreateEventInput {
@@ -199,33 +199,25 @@ class EventService implements IEventService {
     }
 
     const now = new Date();
-    const allEvents = await this.repo.getAll();
 
-    let filtered = allEvents.filter((event) => {
-      return event.status === "published" && event.startDatetime >= now;
-    });
-
-    if (category) {
-      filtered = filtered.filter((event) => event.category === category);
-    }
+    const repoFilter: EventRepoFilter = {
+      status: "published",
+      startAfter: now,
+      category: category || undefined,
+    };
 
     if (timeframe === "week") {
       const endOfWeek = new Date(now);
       endOfWeek.setDate(now.getDate() + 7);
-
-      filtered = filtered.filter((event) => {
-        return event.startDatetime <= endOfWeek;
-      });
+      repoFilter.startBefore = endOfWeek;
     }
 
     if (timeframe === "weekend") {
-      filtered = filtered.filter((event) => {
-        const day = event.startDatetime.getDay();
-        return day === 0 || day === 6;
-      });
+      repoFilter.weekendOnly = true;
     }
 
-    return Ok(filtered);
+    const events = await this.repo.getAll(repoFilter);
+    return Ok(events);
   }
 
   private canModify(event: Event, userId: string, userRole: UserRole): boolean {
