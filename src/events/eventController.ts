@@ -35,6 +35,7 @@ class EventController implements IEventController {
     case "InvalidTimeRangeError":
     case "InvalidCapacityError":
     case "InvalidStateError":
+    case "InvalidSearchError":
       return 400;
 
     case "NotFoundError":

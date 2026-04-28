@@ -83,27 +83,21 @@ export class InMemoryEventRepository implements EventRepository {
   }
 
   async getAll(filters?: EventRepoFilter): Promise<Event[]> {
-    let result = Array.from(events.values());
+    let results = Array.from(events.values());
 
-    if (filters?.status) {
-      result = result.filter((e) => e.status === filters.status);
-    }
-    if (filters?.category) {
-      result = result.filter((e) => e.category === filters.category);
-    }
-    if (filters?.startAfter) {
-      result = result.filter((e) => e.startDatetime >= filters.startAfter!);
-    }
-    if (filters?.startBefore) {
-      result = result.filter((e) => e.startDatetime <= filters.startBefore!);
-    }
-    if (filters?.weekendOnly) {
-      result = result.filter((e) => {
-        const day = e.startDatetime.getDay();
-        return day === 0 || day === 6;
-      });
+    if (filters?.status) results = results.filter(e => e.status === filters.status);
+    if (filters?.category) results = results.filter(e => e.category === filters.category);
+    if (filters?.startAfter) results = results.filter(e => e.startDatetime >= filters.startAfter!);
+    if (filters?.startBefore) results = results.filter(e => e.startDatetime <= filters.startBefore!);
+    if (filters?.query?.trim()) {
+      const q = filters.query.trim().toLowerCase();
+      results = results.filter(e =>
+        e.title.toLowerCase().includes(q) ||
+        e.description.toLowerCase().includes(q) ||
+        e.location.toLowerCase().includes(q)
+      );
     }
 
-    return result;
+    return results;
   }
 }

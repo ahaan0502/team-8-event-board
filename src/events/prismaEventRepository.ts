@@ -69,30 +69,26 @@ export class PrismaEventRepository implements EventRepository {
   }
 
   async getAll(filters?: EventRepoFilter): Promise<Event[]> {
-    const where: Record<string, unknown> = {};
+    const where: any = {};
 
-    if (filters?.status) {
-      where.status = filters.status as EventStatus;
-    }
-    if (filters?.category) {
-      where.category = filters.category;
-    }
+    if (filters?.status) where.status = filters.status as EventStatus;
+    if (filters?.category) where.category = filters.category;
     if (filters?.startAfter || filters?.startBefore) {
-      const range: Record<string, Date> = {};
-      if (filters.startAfter) range.gte = filters.startAfter;
-      if (filters.startBefore) range.lte = filters.startBefore;
-      where.startDatetime = range;
+      where.startDatetime = {
+        ...(filters.startAfter && { gte: filters.startAfter }),
+        ...(filters.startBefore && { lte: filters.startBefore }),
+      };
+    }
+    if (filters?.query?.trim()) {
+      const q = filters.query.trim();
+      where.OR = [
+        { title: { contains: q } },
+        { description: { contains: q } },
+        { location: { contains: q } },
+      ];
     }
 
-    let events = await prisma.event.findMany({ where });
-
-    if (filters?.weekendOnly) {
-      events = events.filter((e) => {
-        const day = e.startDatetime.getDay();
-        return day === 0 || day === 6;
-      });
-    }
-
+    const events = await prisma.event.findMany({ where });
     return events.map(toDomain);
   }
 
@@ -102,9 +98,7 @@ export class PrismaEventRepository implements EventRepository {
   }
 
   async getEventsByIds(eventIds: string[]): Promise<Event[]> {
-    const events = await prisma.event.findMany({
-      where: { id: { in: eventIds } },
-    });
+    const events = await prisma.event.findMany({ where: { id: { in: eventIds } } });
     return events.map(toDomain);
   }
 
