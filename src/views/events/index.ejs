@@ -1,6 +1,7 @@
 <h1 class="text-2xl font-bold mb-4">Upcoming Events</h1>
 
 <form
+  id="event-filter-form"
   class="flex flex-wrap gap-3 mb-6"
   hx-get="/events"
   hx-target="#event-list"
@@ -8,6 +9,21 @@
   hx-swap="outerHTML"
   hx-push-url="true"
 >
+  <input
+    type="text"
+    name="q"
+    value="<%= filters.query ?? '' %>"
+    placeholder="Search events..."
+    class="border rounded px-3 py-2 text-sm flex-1 min-w-[180px]"
+    hx-get="/events"
+    hx-target="#event-list"
+    hx-select="#event-list"
+    hx-swap="outerHTML"
+    hx-push-url="true"
+    hx-trigger="keyup changed delay:400ms"
+    hx-include="#event-filter-form"
+  />
+
   <select name="category" class="border rounded px-3 py-2 text-sm">
     <option value="">All Categories</option>
     <option value="Tech" <%= filters.category === "Tech" ? "selected" : "" %>>Tech</option>
