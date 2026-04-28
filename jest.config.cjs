@@ -10,4 +10,6 @@ module.exports = {
   },
   clearMocks: true,
   collectCoverageFrom: ['src/**/*.ts'],
+  setupFiles: ['dotenv/config'],
+  globalSetup: '<rootDir>/test/globalSetup.cjs',
 }
