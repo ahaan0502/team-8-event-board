@@ -1,7 +1,7 @@
 import "dotenv/config";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import { PrismaClient } from "@prisma/client";
-import { RSVPRepository, RSVP } from "./rsvpRepository";
+import type { RSVP, RSVPRepository } from "../events/rsvpRepository";
 
 function createClient() {
   const url = process.env.DATABASE_URL ?? "file:./prisma/dev.db";
@@ -11,12 +11,21 @@ function createClient() {
 
 const prisma = createClient();
 
-function toDomain(rsvp: any): RSVP {
+// simple type to avoid prisma type issues
+type PrismaRsvp = {
+  id: string;
+  eventId: string;
+  userId: string;
+  status: string;
+  createdAt: Date;
+};
+
+function toDomain(rsvp: PrismaRsvp): RSVP {
   return {
     id: rsvp.id,
     eventId: rsvp.eventId,
     userId: rsvp.userId,
-    status: rsvp.status,
+    status: rsvp.status as RSVP["status"],
     createdAt: rsvp.createdAt,
   };
 }
@@ -31,14 +40,15 @@ export class PrismaRSVPRepository implements RSVPRepository {
         },
       },
     });
-    return rsvp ? toDomain(rsvp) : null;
+    return rsvp ? toDomain(rsvp as PrismaRsvp) : null;
   }
 
   async getByEvent(eventId: string): Promise<RSVP[]> {
     const rsvps = await prisma.rsvp.findMany({
       where: { eventId },
+      orderBy: { createdAt: "asc" },
     });
-    return rsvps.map(toDomain);
+    return rsvps.map((r) => toDomain(r as PrismaRsvp));
   }
 
   async create(rsvp: RSVP): Promise<RSVP> {
@@ -50,7 +60,7 @@ export class PrismaRSVPRepository implements RSVPRepository {
         createdAt: rsvp.createdAt,
       },
     });
-    return toDomain(created);
+    return toDomain(created as PrismaRsvp);
   }
 
   async update(rsvp: RSVP): Promise<RSVP> {
@@ -60,6 +70,6 @@ export class PrismaRSVPRepository implements RSVPRepository {
         status: rsvp.status,
       },
     });
-    return toDomain(updated);
+    return toDomain(updated as PrismaRsvp);
   }
 }
