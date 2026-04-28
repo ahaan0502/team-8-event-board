@@ -72,4 +72,39 @@ export class PrismaRSVPRepository implements RSVPRepository {
     });
     return toDomain(updated as PrismaRsvp);
   }
+
+  async findByUserId(userId: string): Promise<RSVP[]> {
+  const rsvps = await prisma.rsvp.findMany({
+    where: { userId },
+  });
+  return rsvps.map((r) => toDomain(r as PrismaRsvp));
+}
+
+  async findByEventId(eventId: string): Promise<RSVP[]> {
+    const rsvps = await prisma.rsvp.findMany({
+      where: { eventId },
+      orderBy: { createdAt: "asc" },
+    });
+    return rsvps.map((r) => toDomain(r as PrismaRsvp));
+  }
+
+  async save(rsvp: RSVP): Promise<void> {
+    await prisma.rsvp.upsert({
+      where: {
+        eventId_userId: {
+          eventId: rsvp.eventId,
+          userId: rsvp.userId,
+        },
+      },
+      update: {
+        status: rsvp.status,
+      },
+      create: {
+        eventId: rsvp.eventId,
+        userId: rsvp.userId,
+        status: rsvp.status,
+        createdAt: rsvp.createdAt,
+      },
+    });
+  }
 }
