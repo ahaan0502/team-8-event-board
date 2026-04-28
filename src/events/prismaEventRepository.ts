@@ -84,7 +84,12 @@ export class PrismaEventRepository implements EventRepository {
       where.startDatetime = range;
     }
 
-    let events = await prisma.event.findMany({ where });
+    let events = await prisma.event.findMany({
+      where,
+      orderBy: {
+        startDatetime: "asc",
+      },
+    });
 
     if (filters?.weekendOnly) {
       events = events.filter((e) => {
