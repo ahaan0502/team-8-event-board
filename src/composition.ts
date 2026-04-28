@@ -8,7 +8,6 @@ import { CreateAttendeeService } from "./rsvp/attendeeService";
 import { CreateAttendeeController } from "./rsvp/attendeeController";
 import type { IAttendeeController } from "./rsvp/attendeeController";
 import type { IApp } from "./contracts";
-import { InMemoryEventRepository } from "./events/inMemoryEventRepository";
 import { CreateEventController } from "./events/eventController";
 import { CreateEventService } from "./events/eventService";
 import { CreateOrganizerDashboardService } from "./events/OrganizerDashboardService";
