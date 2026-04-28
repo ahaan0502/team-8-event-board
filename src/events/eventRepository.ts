@@ -5,7 +5,7 @@ export interface EventRepoFilter {
   category?: string;
   startAfter?: Date;
   startBefore?: Date;
-  weekendOnly?: boolean;
+  query?: string;
 }
 
 export interface EventRepository {
