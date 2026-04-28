@@ -15,6 +15,9 @@ export interface RSVPRepository {
   getByEvent(eventId: string): Promise<RSVP[]>;
   create(rsvp: RSVP): Promise<RSVP>;
   update(rsvp: RSVP): Promise<RSVP>;
+  findByUserId(userId: string): Promise<RSVP[]>;
+  findByEventId(eventId: string): Promise<RSVP[]>;
+  save(rsvp: RSVP): Promise<void>;
 }
 
 class InMemoryRSVPRepository implements RSVPRepository {
