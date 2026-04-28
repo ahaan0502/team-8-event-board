@@ -8,7 +8,22 @@ const FAR = new Date(Date.now() + 172_800_000);
 function makeRepo(events: Event[]): EventRepository {
   const store = new Map(events.map((e) => [e.id, e]));
   return {
-    async getAll() { return Array.from(store.values()); },
+    async getAll(filters?) {
+      let result = Array.from(store.values());
+      if (filters?.status) result = result.filter((e) => e.status === filters.status);
+      if (filters?.startAfter) result = result.filter((e) => e.startDatetime >= filters.startAfter!);
+      if (filters?.startBefore) result = result.filter((e) => e.startDatetime <= filters.startBefore!);
+      if (filters?.category) result = result.filter((e) => e.category === filters.category);
+      if (filters?.query?.trim()) {
+        const q = filters.query.trim().toLowerCase();
+        result = result.filter((e) =>
+          e.title.toLowerCase().includes(q) ||
+          e.description.toLowerCase().includes(q) ||
+          e.location.toLowerCase().includes(q)
+        );
+      }
+      return result;
+    },
     async create(e) { store.set(e.id, e); return e; },
     async update(e) { store.set(e.id, e); return e; },
     async getEventById(id) { return store.get(id) ?? null; },
@@ -48,7 +63,7 @@ const service = CreateEventService(makeRepo([tsEvent, jazzEvent, campusEvent, dr
 
 describe("Feature 10 — Event Search", () => {
   it("returns all published upcoming events when query is empty", async () => {
-    const result = await service.listPublishedEvents({ q: "" });
+    const result = await service.listPublishedEvents({ query:"" });
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     const ids = result.value.map((e) => e.id);
@@ -66,7 +81,7 @@ describe("Feature 10 — Event Search", () => {
   });
 
   it("matches by title (case-insensitive)", async () => {
-    const result = await service.listPublishedEvents({ q: "typescript" });
+    const result = await service.listPublishedEvents({ query:"typescript" });
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.value.map((e) => e.id)).toContain("e1");
@@ -74,42 +89,42 @@ describe("Feature 10 — Event Search", () => {
   });
 
   it("matches by description", async () => {
-    const result = await service.listPublishedEvents({ q: "live jazz" });
+    const result = await service.listPublishedEvents({ query:"live jazz" });
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.value.map((e) => e.id)).toContain("e2");
   });
 
   it("matches by location", async () => {
-    const result = await service.listPublishedEvents({ q: "campus" });
+    const result = await service.listPublishedEvents({ query:"campus" });
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.value.map((e) => e.id)).toContain("e3");
   });
 
   it("returns empty list when no events match the query", async () => {
-    const result = await service.listPublishedEvents({ q: "xyznonexistent" });
+    const result = await service.listPublishedEvents({ query:"xyznonexistent" });
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.value).toHaveLength(0);
   });
 
   it("does not return draft events even if they match the query", async () => {
-    const result = await service.listPublishedEvents({ q: "hidden draft" });
+    const result = await service.listPublishedEvents({ query:"hidden draft" });
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.value.map((e) => e.id)).not.toContain("e4");
   });
 
   it("returns InvalidSearchError for a query over 200 characters", async () => {
-    const result = await service.listPublishedEvents({ q: "a".repeat(201) });
+    const result = await service.listPublishedEvents({ query:"a".repeat(201) });
     expect(result.ok).toBe(false);
     if (result.ok) return;
     expect(result.value.type).toBe("InvalidSearchError");
   });
 
   it("accepts a query of exactly 200 characters", async () => {
-    const result = await service.listPublishedEvents({ q: "a".repeat(200) });
+    const result = await service.listPublishedEvents({ query:"a".repeat(200) });
     expect(result.ok).toBe(true);
   });
 });

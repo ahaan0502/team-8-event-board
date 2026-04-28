@@ -348,11 +348,11 @@ this.app.get(
     const rawCategory = typeof req.query.category === "string" ? req.query.category : undefined;
     const rawTimeframe = typeof req.query.timeframe === "string" ? req.query.timeframe : undefined;
     const timeframe = rawTimeframe as "all" | "week" | "weekend" | undefined;
-    const q = typeof req.query.q === "string" ? req.query.q : undefined;
+    const rawQuery = typeof req.query.q === "string" ? req.query.q : undefined;
 
     await this.eventController.listEvents(
       res,
-      { category: rawCategory, timeframe, q },
+      { category: rawCategory, timeframe, query: rawQuery },
       sessionStore(req)
     );
   })
