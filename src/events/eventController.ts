@@ -111,7 +111,8 @@ class EventController implements IEventController {
 
   const result = await this.service.getEventById(
     eventId,
-    user?.userId
+    user?.userId,
+    user?.role
   );
 
   if (result.ok === false) {

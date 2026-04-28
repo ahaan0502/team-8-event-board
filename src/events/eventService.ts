@@ -37,7 +37,8 @@ export interface IEventService {
   ): Promise<Result<Event, EventError>>;
   getEventById(
     eventId: string,
-    actingUserId?: string
+    actingUserId?: string,
+    actingUserRole?: UserRole
   ): Promise<Result<Event, EventError>>;
   publishEvent(
     eventId: string,
@@ -104,7 +105,8 @@ class EventService implements IEventService {
 
   async getEventById(
     eventId: string,
-    actingUserId?: string
+    actingUserId?: string,
+    actingUserRole?: string,
   ): Promise<Result<Event, EventError>> {
     const event = await this.repo.getEventById(eventId);
 
@@ -112,7 +114,7 @@ class EventService implements IEventService {
       return Err(NotFoundError("Event not found."));
     }
 
-    if (event.status === "draft" && event.organizerId !== actingUserId) {
+    if (event.status === "draft" && event.organizerId !== actingUserId && actingUserRole !== "admin") {
       return Err(NotFoundError("Event not found."));
     }
 
