@@ -1,12 +1,16 @@
 import "dotenv/config";
-import { PrismaClient, EventStatus } from "@prisma/client";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+import { PrismaClient, EventStatus } from "@prisma/client";
 import { EventRepository, EventRepoFilter } from "./eventRepository";
 import { Event } from "./event";
 
-const dbUrl = process.env.DATABASE_URL ?? "file:./prisma/dev.db";
-const adapter = new PrismaBetterSqlite3({ url: dbUrl });
-const prisma = new PrismaClient({ adapter });
+function createClient() {
+  const url = process.env.DATABASE_URL ?? "file:./prisma/dev.db";
+  const adapter = new PrismaBetterSqlite3({ url });
+  return new PrismaClient({ adapter });
+}
+
+const prisma = createClient();
 
 function toDomain(event: any): Event {
   return {
@@ -30,25 +34,19 @@ export class PrismaEventRepository implements EventRepository {
     const created = await prisma.event.create({
       data: {
         id: event.id,
-
         title: event.title,
         description: event.description,
         location: event.location,
         category: event.category,
-
         status: event.status as EventStatus,
         capacity: event.capacity ?? null,
-
         startDatetime: event.startDatetime,
         endDatetime: event.endDatetime,
-
         organizerId: event.organizerId,
-
         createdAt: event.createdAt,
         updatedAt: event.updatedAt,
       },
     });
-
     return toDomain(created);
   }
 
@@ -60,17 +58,13 @@ export class PrismaEventRepository implements EventRepository {
         description: event.description,
         location: event.location,
         category: event.category,
-
         status: event.status as EventStatus,
         capacity: event.capacity ?? null,
-
         startDatetime: event.startDatetime,
         endDatetime: event.endDatetime,
-
         updatedAt: event.updatedAt,
       },
     });
-
     return toDomain(updated);
   }
 

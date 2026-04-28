@@ -1,6 +1,12 @@
 import { Event } from './event'
 import { EventRepository, EventRepoFilter } from './eventRepository'
 
+function daysFromNow(n: number): Date {
+  const d = new Date();
+  d.setDate(d.getDate() + n);
+  return d;
+}
+
 const sampleEvents: Event[] = [
   {
     id: 'event-1',
@@ -10,8 +16,8 @@ const sampleEvents: Event[] = [
     category: 'Tech',
     status: 'published',
     capacity: 20,
-    startDatetime: new Date('2026-05-10T18:00:00'),
-    endDatetime: new Date('2026-05-10T20:00:00'),
+    startDatetime: daysFromNow(7),
+    endDatetime: daysFromNow(8),
     organizerId: 'user-staff',
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -24,8 +30,8 @@ const sampleEvents: Event[] = [
     category: 'Social',
     status: 'draft',
     capacity: 40,
-    startDatetime: new Date('2026-05-17T17:00:00'),
-    endDatetime: new Date('2026-05-17T19:00:00'),
+    startDatetime: daysFromNow(10),
+    endDatetime: daysFromNow(11),
     organizerId: 'user-staff',
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -38,8 +44,8 @@ const sampleEvents: Event[] = [
     category: 'Entertainment',
     status: 'published',
     capacity: 100,
-    startDatetime: new Date('2026-05-24T19:00:00'),
-    endDatetime: new Date('2026-05-24T21:00:00'),
+    startDatetime: daysFromNow(14),
+    endDatetime: daysFromNow(15),
     organizerId: 'user-staff',
     createdAt: new Date(),
     updatedAt: new Date(),
