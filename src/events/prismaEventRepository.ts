@@ -1,8 +1,8 @@
 import "dotenv/config";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import { PrismaClient, EventStatus } from "@prisma/client";
-import { EventRepository, EventRepoFilter } from "./eventRepository";
-import { Event } from "./event";
+import type { EventRepository, EventRepoFilter } from "./eventRepository";
+import type { Event } from "./event";
 
 function createClient() {
   const url = process.env.DATABASE_URL ?? "file:./prisma/dev.db";
@@ -12,7 +12,22 @@ function createClient() {
 
 const prisma = createClient();
 
-function toDomain(event: any): Event {
+type PrismaEventRow = {
+  id: string;
+  title: string;
+  description: string;
+  location: string;
+  category: string;
+  status: EventStatus;
+  capacity: number | null;
+  startDatetime: Date;
+  endDatetime: Date;
+  organizerId: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+function toDomain(event: PrismaEventRow): Event {
   return {
     id: event.id,
     title: event.title,
@@ -33,7 +48,7 @@ export class PrismaEventRepository implements EventRepository {
   async create(event: Event): Promise<Event> {
     const created = await prisma.event.create({
       data: {
-        id: event.id,
+        ...(event.id ? { id: event.id } : {}),
         title: event.title,
         description: event.description,
         location: event.location,
@@ -71,7 +86,16 @@ export class PrismaEventRepository implements EventRepository {
   }
 
   async getAll(filters?: EventRepoFilter): Promise<Event[]> {
-    const where: any = {};
+    const where: {
+      status?: EventStatus;
+      category?: string;
+      startDatetime?: { gte?: Date; lte?: Date };
+      OR?: Array<{
+        title?: { contains: string };
+        description?: { contains: string };
+        location?: { contains: string };
+      }>;
+    } = {};
 
     if (filters?.status) where.status = filters.status as EventStatus;
     if (filters?.category) where.category = filters.category;
@@ -92,17 +116,10 @@ export class PrismaEventRepository implements EventRepository {
       ];
     }
 
-    let events = await prisma.event.findMany({
+    const events = await prisma.event.findMany({
       where,
       orderBy: { startDatetime: "asc" },
     });
-
-    if ((filters as any)?.weekendOnly) {
-      events = events.filter((e) => {
-        const day = e.startDatetime.getDay();
-        return day === 0 || day === 6;
-      });
-    }
 
     return events.map(toDomain);
   }
