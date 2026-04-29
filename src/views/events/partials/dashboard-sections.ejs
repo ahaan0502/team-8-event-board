@@ -3,8 +3,19 @@
   <p>No draft events.</p>
 <% } %>
 <% dashboard.draft.forEach(item => { %>
-  <div>
+  <div class="mb-3">
     <strong><%= item.event.title %></strong> - Attendees: <%= item.attendeeCount %>
+    <form
+      class="inline-block ml-2"
+      hx-post="/events/<%= item.event.id %>/publish"
+      hx-target="#organizer-dashboard-sections"
+      hx-select="#organizer-dashboard-sections"
+      hx-swap="outerHTML"
+    >
+      <button type="submit" class="px-2 py-1 rounded bg-green-100 text-green-800 text-sm hover:bg-green-200">
+        Publish
+      </button>
+    </form>
   </div>
 <% }) %>
 
@@ -13,8 +24,19 @@
   <p>No published events.</p>
 <% } %>
 <% dashboard.published.forEach(item => { %>
-  <div>
+  <div class="mb-3">
     <strong><%= item.event.title %></strong> - Attendees: <%= item.attendeeCount %>
+    <form
+      class="inline-block ml-2"
+      hx-post="/events/<%= item.event.id %>/cancel"
+      hx-target="#organizer-dashboard-sections"
+      hx-select="#organizer-dashboard-sections"
+      hx-swap="outerHTML"
+    >
+      <button type="submit" class="px-2 py-1 rounded bg-red-100 text-red-700 text-sm hover:bg-red-200">
+        Cancel
+      </button>
+    </form>
   </div>
 <% }) %>
 
