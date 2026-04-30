@@ -1,5 +1,5 @@
 import type { Response } from "express";
-import type { IEventService, CreateEventInput, EventFilterInput } from "./eventService";
+import type { IEventService, CreateEventInput } from "./eventService";
 import {
   touchAppSession,
   getAuthenticatedUser,
@@ -19,7 +19,6 @@ export interface IEventController {
   toggleRSVP(res: Response, eventId: string, store: AppSessionStore): Promise<void>;
   publishEventFromForm(res: Response, eventId: string, store: AppSessionStore, htmx?: boolean): Promise<void>;
   cancelEventFromForm(res: Response, eventId: string, store: AppSessionStore, htmx?: boolean): Promise<void>;
-  listEvents(res: Response, filters: EventFilterInput, store: AppSessionStore): Promise<void>;
 }
 
 class EventController implements IEventController {
@@ -35,7 +34,6 @@ class EventController implements IEventController {
     case "InvalidTimeRangeError":
     case "InvalidCapacityError":
     case "InvalidStateError":
-    case "InvalidSearchError":
       return 400;
 
     case "NotFoundError":
@@ -113,8 +111,7 @@ class EventController implements IEventController {
 
   const result = await this.service.getEventById(
     eventId,
-    user?.userId,
-    user?.role
+    user?.userId
   );
 
   if (result.ok === false) {
@@ -353,29 +350,6 @@ class EventController implements IEventController {
       return;
     }
     res.redirect(`/events/${eventId}`);
-  }
-
-  async listEvents(
-    res: Response,
-    filters: EventFilterInput,
-    store: AppSessionStore
-  ): Promise<void> {
-    const session = touchAppSession(store);
-    const isHtmx = res.req?.get("HX-Request") === "true";
-
-    const result = await this.service.listPublishedEvents(filters);
-
-    if (result.ok === false) {
-      res.status(400).render("partials/error", { message: result.value.message, layout: false });
-      return;
-    }
-
-    if (isHtmx) {
-      res.render("events/partials/event-list", { events: result.value, filters, layout: false });
-      return;
-    }
-
-    res.render("events/index", { events: result.value, session, filters });
   }
 }
 
