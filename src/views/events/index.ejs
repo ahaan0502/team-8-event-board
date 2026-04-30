@@ -1,0 +1,62 @@
+<h1 class="text-2xl font-bold mb-4">Upcoming Events</h1>
+
+<form
+  id="event-filter-form"
+  class="flex flex-wrap gap-3 mb-6 items-center"
+  hx-get="/events"
+  hx-target="#event-list"
+  hx-select="#event-list"
+  hx-swap="outerHTML"
+  hx-push-url="true"
+>
+  <!-- Search input with Alpine.js clear button (Feature 10 Sprint 4) -->
+  <div
+    class="relative flex-1 min-w-[200px]"
+    x-data='{ query: <%- JSON.stringify(filters.query ?? "") %> }'
+  >
+    <input
+      type="text"
+      name="q"
+      x-model="query"
+      placeholder="Search events..."
+      class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm pr-8 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+      hx-get="/events"
+      hx-target="#event-list"
+      hx-select="#event-list"
+      hx-swap="outerHTML"
+      hx-push-url="true"
+      hx-trigger="keyup changed delay:400ms"
+      hx-include="#event-filter-form"
+    />
+    <button
+      type="button"
+      x-show="query.trim().length > 0"
+      x-transition
+      @click="query = ''; $nextTick(() => htmx.trigger($el.closest('form'), 'submit'))"
+      class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 text-lg leading-none"
+      aria-label="Clear search"
+    >&times;</button>
+  </div>
+
+  <select name="category" class="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+    <option value="">All Categories</option>
+    <option value="Tech" <%= filters.category === "Tech" ? "selected" : "" %>>Tech</option>
+    <option value="Social" <%= filters.category === "Social" ? "selected" : "" %>>Social</option>
+    <option value="Entertainment" <%= filters.category === "Entertainment" ? "selected" : "" %>>Entertainment</option>
+    <option value="Sports" <%= filters.category === "Sports" ? "selected" : "" %>>Sports</option>
+    <option value="Academic" <%= filters.category === "Academic" ? "selected" : "" %>>Academic</option>
+    <option value="Other" <%= filters.category === "Other" ? "selected" : "" %>>Other</option>
+  </select>
+
+  <select name="timeframe" class="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+    <option value="all" <%= filters.timeframe === "all" ? "selected" : "" %>>Any time</option>
+    <option value="week" <%= filters.timeframe === "week" ? "selected" : "" %>>This week</option>
+    <option value="weekend" <%= filters.timeframe === "weekend" ? "selected" : "" %>>This weekend</option>
+  </select>
+
+  <button type="submit" class="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700">
+    Filter
+  </button>
+</form>
+
+<%- include("partials/event-list", { events, filters }) %>

@@ -1,5 +1,5 @@
 import { Ok, type Result } from "../lib/result";
-import type { RSVPRepository } from "../rsvps/RSVPRepository";
+import type { RSVPRepository } from "./rsvpRepository";
 import type { Event, EventStatus } from "./event";
 import type { EventRepository } from "./eventRepository";
 

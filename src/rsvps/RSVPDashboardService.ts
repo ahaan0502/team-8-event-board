@@ -2,7 +2,7 @@ import { Ok, type Result } from "../lib/result";
 import type { Event } from "../events/event";
 import type { EventRepository } from "../events/eventRepository";
 import type { RSVP } from "./RSVP";
-import type { RSVPRepository } from "./RSVPRepository";
+import type { RSVPRepository } from "../events/rsvpRepository";
 
 export type DashboardItem = {
   rsvp: RSVP;
