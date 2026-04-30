@@ -1,11 +1,5 @@
 import { Event } from './event'
-import { EventRepository, EventRepoFilter } from './eventRepository'
-
-function daysFromNow(n: number): Date {
-  const d = new Date();
-  d.setDate(d.getDate() + n);
-  return d;
-}
+import { EventRepository } from './eventRepository'
 
 const sampleEvents: Event[] = [
   {
@@ -16,8 +10,8 @@ const sampleEvents: Event[] = [
     category: 'Tech',
     status: 'published',
     capacity: 20,
-    startDatetime: daysFromNow(7),
-    endDatetime: daysFromNow(8),
+    startDatetime: new Date('2026-04-20T18:00:00'),
+    endDatetime: new Date('2026-04-20T20:00:00'),
     organizerId: 'user-staff',
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -30,8 +24,8 @@ const sampleEvents: Event[] = [
     category: 'Social',
     status: 'draft',
     capacity: 40,
-    startDatetime: daysFromNow(10),
-    endDatetime: daysFromNow(11),
+    startDatetime: new Date('2026-04-22T17:00:00'),
+    endDatetime: new Date('2026-04-22T19:00:00'),
     organizerId: 'user-staff',
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -44,8 +38,8 @@ const sampleEvents: Event[] = [
     category: 'Entertainment',
     status: 'published',
     capacity: 100,
-    startDatetime: daysFromNow(14),
-    endDatetime: daysFromNow(15),
+    startDatetime: new Date('2026-04-25T19:00:00'),
+    endDatetime: new Date('2026-04-25T21:00:00'),
     organizerId: 'user-staff',
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -82,22 +76,7 @@ export class InMemoryEventRepository implements EventRepository {
     )
   }
 
-  async getAll(filters?: EventRepoFilter): Promise<Event[]> {
-    let results = Array.from(events.values());
-
-    if (filters?.status) results = results.filter(e => e.status === filters.status);
-    if (filters?.category) results = results.filter(e => e.category === filters.category);
-    if (filters?.startAfter) results = results.filter(e => e.startDatetime >= filters.startAfter!);
-    if (filters?.startBefore) results = results.filter(e => e.startDatetime <= filters.startBefore!);
-    if (filters?.query?.trim()) {
-      const q = filters.query.trim().toLowerCase();
-      results = results.filter(e =>
-        e.title.toLowerCase().includes(q) ||
-        e.description.toLowerCase().includes(q) ||
-        e.location.toLowerCase().includes(q)
-      );
-    }
-
-    return results;
+  async getAll(): Promise<Event[]> {
+    return Array.from(events.values())
   }
 }

@@ -7,7 +7,6 @@ import {
   InvalidCapacityError,
   NotAuthorizedError,
   InvalidStateError,
-  InvalidSearchError,
 } from "./errors";
 import { Event } from "./event";
 import type { EventRepository } from "./eventRepository";
@@ -27,7 +26,6 @@ export interface CreateEventInput {
 export interface EventFilterInput {
   category?: string;
   timeframe?: "all" | "week" | "weekend";
-  query?: string;
 }
 
 export interface IEventService {
@@ -39,8 +37,7 @@ export interface IEventService {
   ): Promise<Result<Event, EventError>>;
   getEventById(
     eventId: string,
-    actingUserId?: string,
-    actingUserRole?: UserRole
+    actingUserId?: string
   ): Promise<Result<Event, EventError>>;
   publishEvent(
     eventId: string,
@@ -107,8 +104,7 @@ class EventService implements IEventService {
 
   async getEventById(
     eventId: string,
-    actingUserId?: string,
-    actingUserRole?: string,
+    actingUserId?: string
   ): Promise<Result<Event, EventError>> {
     const event = await this.repo.getEventById(eventId);
 
@@ -116,7 +112,7 @@ class EventService implements IEventService {
       return Err(NotFoundError("Event not found."));
     }
 
-    if (event.status === "draft" && event.organizerId !== actingUserId && actingUserRole !== "admin") {
+    if (event.status === "draft" && event.organizerId !== actingUserId) {
       return Err(NotFoundError("Event not found."));
     }
 
@@ -202,39 +198,34 @@ class EventService implements IEventService {
       return Err(ValidationError("Invalid timeframe value."));
     }
 
-    if (filters.query !== undefined && filters.query.length > 200) {
-      return Err(InvalidSearchError("Search query must be 200 characters or fewer."));
-    }
-
     const now = new Date();
+    const allEvents = await this.repo.getAll();
 
-    const repoFilters: {
-      status: string;
-      startAfter: Date;
-      startBefore?: Date;
-      category?: string;
-      query?: string;
-    } = { status: "published", startAfter: now };
+    let filtered = allEvents.filter((event) => {
+      return event.status === "published" && event.startDatetime >= now;
+    });
 
-    if (category) repoFilters.category = category;
-    if (filters.query?.trim()) repoFilters.query = filters.query.trim();
+    if (category) {
+      filtered = filtered.filter((event) => event.category === category);
+    }
 
     if (timeframe === "week") {
       const endOfWeek = new Date(now);
       endOfWeek.setDate(now.getDate() + 7);
-      repoFilters.startBefore = endOfWeek;
+
+      filtered = filtered.filter((event) => {
+        return event.startDatetime <= endOfWeek;
+      });
     }
 
-    let results = await this.repo.getAll(repoFilters);
-
     if (timeframe === "weekend") {
-      results = results.filter((event) => {
+      filtered = filtered.filter((event) => {
         const day = event.startDatetime.getDay();
         return day === 0 || day === 6;
       });
     }
 
-    return Ok(results);
+    return Ok(filtered);
   }
 
   private canModify(event: Event, userId: string, userRole: UserRole): boolean {

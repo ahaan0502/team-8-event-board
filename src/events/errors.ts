@@ -26,10 +26,6 @@ export function NotAuthorizedError(message: string) {
   return { type: "NotAuthorizedError" as const, message };
 }
 
-export function InvalidSearchError(message: string) {
-  return { type: "InvalidSearchError" as const, message };
-}
-
 export type EventError =
   | ReturnType<typeof ValidationError>
   | ReturnType<typeof NotFoundError>
@@ -37,5 +33,4 @@ export type EventError =
   | ReturnType<typeof NotAuthorizedError>
   | ReturnType<typeof InvalidTimeRangeError>
   | ReturnType<typeof InvalidCapacityError>
-  | ReturnType<typeof InvalidStateError>
-  | ReturnType<typeof InvalidSearchError>;
+  | ReturnType<typeof InvalidStateError>;

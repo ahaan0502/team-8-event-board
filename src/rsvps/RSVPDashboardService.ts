@@ -27,16 +27,10 @@ class RSVPDashboardService implements IRSVPDashboardService {
   async getMyRsvpsDashboard(
     userId: string
   ): Promise<Result<MyRsvpsDashboard, never>> {
-    const joinedRows = this.rsvpRepository.findDashboardRowsByUserId
-      ? await this.rsvpRepository.findDashboardRowsByUserId(userId)
-      : null;
+    const userRsvps = await this.rsvpRepository.findByUserId(userId);
+    const eventIds = userRsvps.map((rsvp) => rsvp.eventId);
+    const events = await this.eventRepository.getEventsByIds(eventIds);
 
-    const userRsvps = joinedRows
-      ? joinedRows.map((row) => row.rsvp)
-      : await this.rsvpRepository.findByUserId(userId);
-    const events = joinedRows
-      ? joinedRows.map((row) => row.event)
-      : await this.eventRepository.getEventsByIds(userRsvps.map((rsvp) => rsvp.eventId));
     const eventMap = new Map<string, Event>(events.map((event) => [event.id, event]));
 
     const dashboard: MyRsvpsDashboard = {
