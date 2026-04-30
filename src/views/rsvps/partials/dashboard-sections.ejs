@@ -3,8 +3,19 @@
   <p>No upcoming RSVPs.</p>
 <% } %>
 <% dashboard.upcoming.forEach(item => { %>
-  <div>
+  <div class="mb-3">
     <strong><%= item.event.title %></strong>
+    <form
+      class="inline-block ml-2"
+      hx-post="/events/<%= item.event.id %>/rsvp"
+      hx-target="#my-rsvps-sections"
+      hx-select="#my-rsvps-sections"
+      hx-swap="outerHTML"
+    >
+      <button type="submit" class="px-2 py-1 rounded bg-red-100 text-red-700 text-sm hover:bg-red-200">
+        Cancel RSVP
+      </button>
+    </form>
   </div>
 <% }) %>
 

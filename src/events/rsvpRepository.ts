@@ -1,4 +1,5 @@
 import { randomUUID } from "crypto";
+import type { Event } from '../events/event'
 
 export type RSVPStatus = "going" | "waitlisted" | "cancelled";
 
@@ -10,6 +11,11 @@ export interface RSVP {
   createdAt: Date;
 }
 
+export interface RSVPDashboardRow {
+  rsvp: RSVP
+  event: Event
+}
+
 export interface RSVPRepository {
   getByEventAndUser(eventId: string, userId: string): Promise<RSVP | null>;
   getByEvent(eventId: string): Promise<RSVP[]>;
@@ -18,6 +24,8 @@ export interface RSVPRepository {
   findByUserId(userId: string): Promise<RSVP[]>;
   findByEventId(eventId: string): Promise<RSVP[]>;
   save(rsvp: RSVP): Promise<void>;
+  findDashboardRowsByUserId?(userId: string): Promise<RSVPDashboardRow[]>
+  countGoingByEventIds?(eventIds: string[]): Promise<Map<string, number>>
 }
 
 class InMemoryRSVPRepository implements RSVPRepository {

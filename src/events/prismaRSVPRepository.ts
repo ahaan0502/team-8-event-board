@@ -40,11 +40,11 @@ export class PrismaRSVPRepository implements RSVPRepository {
   async create(rsvp: RSVP): Promise<RSVP> {
     const row = await prisma.rsvp.create({
       data: {
-        id: rsvp.id,
         eventId: rsvp.eventId,
         userId: rsvp.userId,
         status: rsvp.status,
         createdAt: rsvp.createdAt,
+        ...(rsvp.id ? { id: rsvp.id } : {}),
       },
     });
     return toDomain(row);
@@ -57,4 +57,37 @@ export class PrismaRSVPRepository implements RSVPRepository {
     });
     return toDomain(row);
   }
+
+  async findByUserId(userId: string): Promise<RSVP[]> {
+      const rows = await prisma.rsvp.findMany({
+        where: { userId },
+        orderBy: { createdAt: "asc" },
+      });
+      return rows.map(toDomain);
+    }
+  
+    async findByEventId(eventId: string): Promise<RSVP[]> {
+      const rows = await prisma.rsvp.findMany({
+        where: { eventId },
+        orderBy: { createdAt: "asc" },
+      });
+      return rows.map(toDomain);
+    }
+  
+    async save(rsvp: RSVP): Promise<void> {
+      if (rsvp.id) {
+        await prisma.rsvp.upsert({
+          where: { id: rsvp.id },
+          update: { status: rsvp.status },
+          create: {
+            id: rsvp.id,
+            eventId: rsvp.eventId,
+            userId: rsvp.userId,
+            status: rsvp.status,
+            createdAt: rsvp.createdAt,
+          },
+        });
+        return;
+      }
+    }
 }

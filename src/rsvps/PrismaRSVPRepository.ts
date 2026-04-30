@@ -3,8 +3,7 @@ import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import { PrismaClient } from "@prisma/client";
 import type { Event } from "../events/event";
 import type { RSVP } from "./RSVP";
-import type { RSVPDashboardRow, RSVPRepository, RSVPStatus } from "../events/rsvpRepository";
-
+import type { RSVPDashboardRow, RSVPRepository } from "./RSVPRepository";
 
 type PrismaRsvpRow = {
   id: string;
@@ -28,16 +27,6 @@ type PrismaEventRow = {
   createdAt: Date;
   updatedAt: Date;
 };
-
-function toDomain(row: { id: string; eventId: string; userId: string; status: string; createdAt: Date }): RSVP {
-  return {
-    id: row.id,
-    eventId: row.eventId,
-    userId: row.userId,
-    status: row.status as RSVPStatus,
-    createdAt: row.createdAt,
-  };
-}
 
 function createClient() {
   const url = process.env.DATABASE_URL ?? "file:./prisma/dev.db";
@@ -72,77 +61,6 @@ function toDomainEvent(row: PrismaEventRow): Event {
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
-}
-
-export class PrismaRSVPRepository implements RSVPRepository {
-  async getByEventAndUser(eventId: string, userId: string): Promise<RSVP | null> {
-    const row = await prisma.rsvp.findUnique({
-      where: { eventId_userId: { eventId, userId } },
-    });
-    return row ? toDomain(row) : null;
-  }
-
-  async getByEvent(eventId: string): Promise<RSVP[]> {
-    const rows = await prisma.rsvp.findMany({
-      where: { eventId },
-      orderBy: { createdAt: "asc" },
-    });
-    return rows.map(toDomain);
-  }
-
-  async create(rsvp: RSVP): Promise<RSVP> {
-    const row = await prisma.rsvp.create({
-      data: {
-        eventId: rsvp.eventId,
-        userId: rsvp.userId,
-        status: rsvp.status,
-        createdAt: rsvp.createdAt,
-        ...(rsvp.id ? { id: rsvp.id } : {}),
-      },
-    });
-    return toDomain(row);
-  }
-
-  async update(rsvp: RSVP): Promise<RSVP> {
-    const row = await prisma.rsvp.update({
-      where: { id: rsvp.id },
-      data: { status: rsvp.status },
-    });
-    return toDomain(row);
-  }
-
-  async findByUserId(userId: string): Promise<RSVP[]> {
-      const rows = await prisma.rsvp.findMany({
-        where: { userId },
-        orderBy: { createdAt: "asc" },
-      });
-      return rows.map(toDomain);
-    }
-  
-    async findByEventId(eventId: string): Promise<RSVP[]> {
-      const rows = await prisma.rsvp.findMany({
-        where: { eventId },
-        orderBy: { createdAt: "asc" },
-      });
-      return rows.map(toDomain);
-    }
-  
-    async save(rsvp: RSVP): Promise<void> {
-      if (rsvp.id) {
-        await prisma.rsvp.upsert({
-          where: { id: rsvp.id },
-          update: { status: rsvp.status },
-          create: {
-            id: rsvp.id,
-            eventId: rsvp.eventId,
-            userId: rsvp.userId,
-            status: rsvp.status,
-            createdAt: rsvp.createdAt,
-          },
-        });
-        return;
-      }
-    }
 }
 
 export class PrismaDashboardRSVPRepository implements RSVPRepository {
@@ -226,40 +144,4 @@ export class PrismaDashboardRSVPRepository implements RSVPRepository {
 
     return new Map(grouped.map((row) => [row.eventId, row._count._all]));
   }
-
-  async getByEventAndUser(eventId: string, userId: string): Promise<RSVP | null> {
-      const row = await prisma.rsvp.findUnique({
-        where: { eventId_userId: { eventId, userId } },
-      });
-      return row ? toDomain(row) : null;
-    }
-  
-    async getByEvent(eventId: string): Promise<RSVP[]> {
-      const rows = await prisma.rsvp.findMany({
-        where: { eventId },
-        orderBy: { createdAt: "asc" },
-      });
-      return rows.map(toDomain);
-    }
-  
-    async create(rsvp: RSVP): Promise<RSVP> {
-      const row = await prisma.rsvp.create({
-        data: {
-          eventId: rsvp.eventId,
-          userId: rsvp.userId,
-          status: rsvp.status,
-          createdAt: rsvp.createdAt,
-          ...(rsvp.id ? { id: rsvp.id } : {}),
-        },
-      });
-      return toDomain(row);
-    }
-  
-    async update(rsvp: RSVP): Promise<RSVP> {
-      const row = await prisma.rsvp.update({
-        where: { id: rsvp.id },
-        data: { status: rsvp.status },
-      });
-      return toDomain(row);
-    }
 }
