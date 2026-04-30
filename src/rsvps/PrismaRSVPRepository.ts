@@ -1,9 +1,14 @@
 import "dotenv/config";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import { PrismaClient } from "@prisma/client";
+
 import type { Event } from "../events/event";
 import type { RSVP } from "./RSVP";
-import type { RSVPDashboardRow, RSVPRepository } from "./RSVPRepository";
+import type {
+  RSVPRepository,
+  RSVPDashboardRow,
+  RSVPStatus,
+} from "../events/rsvpRepository";
 
 type PrismaRsvpRow = {
   id: string;
@@ -41,7 +46,7 @@ function toDomainRSVP(row: PrismaRsvpRow): RSVP {
     id: row.id,
     eventId: row.eventId,
     userId: row.userId,
-    status: row.status as RSVP["status"],
+    status: row.status as RSVPStatus,
     createdAt: row.createdAt,
   };
 }
@@ -63,7 +68,51 @@ function toDomainEvent(row: PrismaEventRow): Event {
   };
 }
 
-export class PrismaDashboardRSVPRepository implements RSVPRepository {
+export class PrismaRSVPRepository implements RSVPRepository {
+  // =====================
+  // Core RSVP methods
+  // =====================
+
+  async getByEventAndUser(eventId: string, userId: string): Promise<RSVP | null> {
+    const row = await prisma.rsvp.findUnique({
+      where: { eventId_userId: { eventId, userId } },
+    });
+    return row ? toDomainRSVP(row) : null;
+  }
+
+  async getByEvent(eventId: string): Promise<RSVP[]> {
+    const rows = await prisma.rsvp.findMany({
+      where: { eventId },
+      orderBy: { createdAt: "asc" },
+    });
+    return rows.map(toDomainRSVP);
+  }
+
+  async create(rsvp: RSVP): Promise<RSVP> {
+    const row = await prisma.rsvp.create({
+      data: {
+        eventId: rsvp.eventId,
+        userId: rsvp.userId,
+        status: rsvp.status,
+        createdAt: rsvp.createdAt,
+        ...(rsvp.id ? { id: rsvp.id } : {}),
+      },
+    });
+    return toDomainRSVP(row);
+  }
+
+  async update(rsvp: RSVP): Promise<RSVP> {
+    const row = await prisma.rsvp.update({
+      where: { id: rsvp.id },
+      data: { status: rsvp.status },
+    });
+    return toDomainRSVP(row);
+  }
+
+  // =====================
+  // Dashboard methods
+  // =====================
+
   async findByUserId(userId: string): Promise<RSVP[]> {
     const rows = await prisma.rsvp.findMany({
       where: { userId },
@@ -128,7 +177,7 @@ export class PrismaDashboardRSVPRepository implements RSVPRepository {
 
   async countGoingByEventIds(eventIds: string[]): Promise<Map<string, number>> {
     if (eventIds.length === 0) {
-      return new Map<string, number>();
+      return new Map();
     }
 
     const grouped = await prisma.rsvp.groupBy({
@@ -137,9 +186,7 @@ export class PrismaDashboardRSVPRepository implements RSVPRepository {
         eventId: { in: eventIds },
         status: "going",
       },
-      _count: {
-        _all: true,
-      },
+      _count: { _all: true },
     });
 
     return new Map(grouped.map((row) => [row.eventId, row._count._all]));

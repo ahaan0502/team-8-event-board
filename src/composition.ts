@@ -18,8 +18,7 @@ import { CreateLoggingService } from "./service/LoggingService";
 import type { ILoggingService } from "./service/LoggingService";
 import { CreateRSVPService } from "./events/rsvpService";
 import { PrismaEventRepository } from "./events/prismaEventRepository";
-import { PrismaRSVPRepository } from "./events/prismaRSVPRepository";
-import { PrismaDashboardRSVPRepository } from "./rsvps/PrismaRSVPRepository";
+import { PrismaRSVPRepository } from "./rsvps/PrismaRSVPRepository";
 
 export function createComposedApp(logger?: ILoggingService): IApp {
   const resolvedLogger = logger ?? CreateLoggingService();
@@ -39,34 +38,33 @@ export function createComposedApp(logger?: ILoggingService): IApp {
   const eventRepo = new PrismaEventRepository();
   const eventService = CreateEventService(eventRepo);
 
-  // RSVP wiring (NEW)
+  // RSVP wiring (single repo)
   const rsvpRepo = new PrismaRSVPRepository();
   const rsvpService = CreateRSVPService(rsvpRepo, eventRepo);
 
   const eventController = CreateEventController(
-  eventService,
-  rsvpService,
-  resolvedLogger
-);
+    eventService,
+    rsvpService,
+    resolvedLogger
+  );
 
   // Attendee list wiring
   const attendeeService = CreateAttendeeService(rsvpRepo, authUsers, eventService);
   const attendeeController = CreateAttendeeController(attendeeService, resolvedLogger);
 
-  // RSVP dashboard wiring
-  const dashboardRsvpRepo = new PrismaDashboardRSVPRepository();
+  // RSVP dashboard wiring (use SAME repo)
   const rsvpDashboardService = CreateRSVPDashboardService(
-  dashboardRsvpRepo,
-  eventRepo
-);
+    rsvpRepo,
+    eventRepo
+  );
   const rsvpDashboardController = new RSVPDashboardController(
     rsvpDashboardService
   );
 
-  // Organizer dashboard wiring
+  // Organizer dashboard wiring (use SAME repo)
   const organizerDashboardService = CreateOrganizerDashboardService(
     eventRepo,
-    dashboardRsvpRepo
+    rsvpRepo
   );
   const organizerDashboardController = new OrganizerDashboardController(
     organizerDashboardService
