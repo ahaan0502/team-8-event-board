@@ -11,7 +11,7 @@ import { CreateEventController } from "./events/eventController";
 import { CreateEventService } from "./events/eventService";
 import { CreateOrganizerDashboardService } from "./events/OrganizerDashboardService";
 import { OrganizerDashboardController } from "./events/OrganizerDashboardController";
-import { PrismaDashboardRSVPRepository } from "./rsvps/PrismaRSVPRepository";
+import { InMemoryRSVPRepository } from "./rsvps/InMemoryRSVPRepository";
 import { RSVPDashboardController } from "./rsvps/RSVPDashboardController";
 import { CreateRSVPDashboardService } from "./rsvps/RSVPDashboardService";
 import { CreateLoggingService } from "./service/LoggingService";
@@ -19,6 +19,7 @@ import type { ILoggingService } from "./service/LoggingService";
 import { CreateRSVPService } from "./events/rsvpService";
 import { PrismaEventRepository } from "./events/prismaEventRepository";
 import { PrismaRSVPRepository } from "./events/prismaRSVPRepository";
+import { PrismaDashboardRSVPRepository } from "./rsvps/PrismaRSVPRepository";
 
 export function createComposedApp(logger?: ILoggingService): IApp {
   const resolvedLogger = logger ?? CreateLoggingService();
