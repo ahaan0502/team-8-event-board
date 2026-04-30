@@ -41,8 +41,8 @@ class RSVPService implements IRSVPService {
   const all = await this.rsvpRepo.getByEvent(eventId);
   const goingCount = all.filter((r) => r.status === "going").length;
 
-  const capacity = event.capacity ?? 0;
-  const isFull = goingCount >= capacity;
+  const capacity = event.capacity;
+  const isFull = capacity !== undefined && goingCount >= capacity;
 
   // CASE 1: No RSVP yet
   if (!existing) {
