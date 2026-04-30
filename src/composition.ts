@@ -53,7 +53,7 @@ export function createComposedApp(logger?: ILoggingService): IApp {
   const attendeeController = CreateAttendeeController(attendeeService, resolvedLogger);
 
   // RSVP dashboard wiring
-  const dashboardRsvpRepo = new InMemoryRSVPRepository();
+  const dashboardRsvpRepo = new PrismaDashboardRSVPRepository();
   const rsvpDashboardService = CreateRSVPDashboardService(
   dashboardRsvpRepo,
   eventRepo
