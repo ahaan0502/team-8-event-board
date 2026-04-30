@@ -7,6 +7,7 @@ import {
   InvalidCapacityError,
   NotAuthorizedError,
   InvalidStateError,
+  InvalidSearchError,
 } from "./errors";
 import { Event } from "./event";
 import type { EventRepository } from "./eventRepository";
@@ -26,6 +27,7 @@ export interface CreateEventInput {
 export interface EventFilterInput {
   category?: string;
   timeframe?: "all" | "week" | "weekend";
+  query?: string;
 }
 
 export interface IEventService {
@@ -193,9 +195,14 @@ class EventService implements IEventService {
   ): Promise<Result<Event[], EventError>> {
     const category = filters.category?.trim();
     const timeframe = filters.timeframe ?? "all";
+    const query = filters.query?.trim();
 
     if (timeframe !== "all" && timeframe !== "week" && timeframe !== "weekend") {
       return Err(ValidationError("Invalid timeframe value."));
+    }
+
+    if (query !== undefined && query.length > 200) {
+      return Err(InvalidSearchError("Search query is too long."));
     }
 
     const now = new Date();
@@ -223,6 +230,14 @@ class EventService implements IEventService {
         const day = event.startDatetime.getDay();
         return day === 0 || day === 6;
       });
+    }
+
+    if (query) {
+      const lower = query.toLowerCase();
+      filtered = filtered.filter((event) =>
+        event.title.toLowerCase().includes(lower) ||
+        event.description.toLowerCase().includes(lower)
+      );
     }
 
     return Ok(filtered);
