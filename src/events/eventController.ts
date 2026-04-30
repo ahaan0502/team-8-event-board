@@ -35,7 +35,6 @@ class EventController implements IEventController {
     case "InvalidTimeRangeError":
     case "InvalidCapacityError":
     case "InvalidStateError":
-    case "InvalidSearchError":
       return 400;
 
     case "NotFoundError":
@@ -113,8 +112,7 @@ class EventController implements IEventController {
 
   const result = await this.service.getEventById(
     eventId,
-    user?.userId,
-    user?.role
+    user?.userId
   );
 
   if (result.ok === false) {

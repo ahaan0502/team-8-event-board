@@ -6,7 +6,9 @@ import { CreatePasswordHasher } from "./auth/PasswordHasher";
 import { CreateApp } from "./app";
 import { CreateAttendeeService } from "./rsvp/attendeeService";
 import { CreateAttendeeController } from "./rsvp/attendeeController";
+import type { IAttendeeController } from "./rsvp/attendeeController";
 import type { IApp } from "./contracts";
+import { InMemoryEventRepository } from "./events/inMemoryEventRepository";
 import { CreateEventController } from "./events/eventController";
 import { CreateEventService } from "./events/eventService";
 import { CreateOrganizerDashboardService } from "./events/OrganizerDashboardService";
@@ -16,9 +18,13 @@ import { RSVPDashboardController } from "./rsvps/RSVPDashboardController";
 import { CreateRSVPDashboardService } from "./rsvps/RSVPDashboardService";
 import { CreateLoggingService } from "./service/LoggingService";
 import type { ILoggingService } from "./service/LoggingService";
+import { CreateRSVPRepository } from "./events/rsvpRepository";
 import { CreateRSVPService } from "./events/rsvpService";
+<<<<<<< HEAD
 import { PrismaEventRepository } from "./events/prismaEventRepository";
 import { PrismaRSVPRepository } from "./rsvps/PrismaRSVPRepository";
+=======
+>>>>>>> dev
 
 export function createComposedApp(logger?: ILoggingService): IApp {
   const resolvedLogger = logger ?? CreateLoggingService();
@@ -35,11 +41,16 @@ export function createComposedApp(logger?: ILoggingService): IApp {
   );
 
   // Event wiring
-  const eventRepo = new PrismaEventRepository();
+  const eventRepo = new InMemoryEventRepository();
   const eventService = CreateEventService(eventRepo);
 
+<<<<<<< HEAD
   // RSVP wiring (single repo)
   const rsvpRepo = new PrismaRSVPRepository();
+=======
+  // RSVP wiring
+  const rsvpRepo = CreateRSVPRepository();
+>>>>>>> dev
   const rsvpService = CreateRSVPService(rsvpRepo, eventRepo);
 
   const eventController = CreateEventController(
@@ -52,9 +63,16 @@ export function createComposedApp(logger?: ILoggingService): IApp {
   const attendeeService = CreateAttendeeService(rsvpRepo, authUsers, eventService);
   const attendeeController = CreateAttendeeController(attendeeService, resolvedLogger);
 
+<<<<<<< HEAD
   // RSVP dashboard wiring (use SAME repo)
   const rsvpDashboardService = CreateRSVPDashboardService(
     rsvpRepo,
+=======
+  // RSVP dashboard wiring
+  const dashboardRsvpRepo = new InMemoryRSVPRepository();
+  const rsvpDashboardService = CreateRSVPDashboardService(
+    dashboardRsvpRepo,
+>>>>>>> dev
     eventRepo
   );
   const rsvpDashboardController = new RSVPDashboardController(
