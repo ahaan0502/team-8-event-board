@@ -13,6 +13,12 @@ enum EventStatus {
   past
 }
 
+enum RSVPStatus {
+  going
+  waitlisted
+  cancelled
+}
+
 model Event {
   id             String      @id @default(cuid())
   title          String
@@ -29,24 +35,19 @@ model Event {
   updatedAt      DateTime    @updatedAt
 
   rsvps          Rsvp[]
-}
 
-enum RSVPStatus {
-  going
-  waitlisted
-  cancelled
+  @@index([organizerId])
 }
 
 model Rsvp {
-  id        String      @id @default(cuid())
-
+  id        String     @id @default(cuid())
   eventId   String
   userId    String
-
   status    RSVPStatus
-  createdAt DateTime    @default(now())
+  createdAt DateTime   @default(now())
 
-  event     Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  event     Event      @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
+  @@index([eventId])
   @@unique([eventId, userId])
 }

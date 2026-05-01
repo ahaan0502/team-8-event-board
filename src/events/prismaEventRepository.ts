@@ -1,20 +1,22 @@
+import { EventStatus } from "@prisma/client";
 import { EventRepository } from "./eventRepository";
 import { Event } from "./event";
+import { ensureTestDemoFixture, getPrisma } from "./prismaClient";
 
-import "dotenv/config";
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
-import { PrismaClient, EventStatus } from "@prisma/client";
-
-function createClient() {
-  const url = process.env.DATABASE_URL ?? "file:./prisma/dev.db";
-  const adapter = new PrismaBetterSqlite3({ url });
-
-  return new PrismaClient({ adapter });
-}
-
-const prisma = createClient();
-
-function toDomain(event: any): Event {
+export function eventRecordToDomain(event: {
+  id: string;
+  title: string;
+  description: string;
+  location: string;
+  category: string;
+  status: Event["status"];
+  capacity: number | null;
+  startDatetime: Date;
+  endDatetime: Date;
+  organizerId: string;
+  createdAt: Date;
+  updatedAt: Date;
+}): Event {
   return {
     id: event.id,
     title: event.title,
@@ -33,6 +35,8 @@ function toDomain(event: any): Event {
 
 export class PrismaEventRepository implements EventRepository {
   async create(event: Event): Promise<Event> {
+    await ensureTestDemoFixture();
+    const prisma = getPrisma();
     const created = await prisma.event.create({
       data: {
         id: event.id,
@@ -55,10 +59,12 @@ export class PrismaEventRepository implements EventRepository {
       },
     });
 
-    return toDomain(created);
+    return eventRecordToDomain(created);
   }
 
   async update(event: Event): Promise<Event> {
+    await ensureTestDemoFixture();
+    const prisma = getPrisma();
     const updated = await prisma.event.update({
       where: { id: event.id },
       data: {
@@ -77,39 +83,41 @@ export class PrismaEventRepository implements EventRepository {
       },
     });
 
-    return toDomain(updated);
+    return eventRecordToDomain(updated);
   }
 
   async getAll(): Promise<Event[]> {
+    await ensureTestDemoFixture();
+    const prisma = getPrisma();
     const events = await prisma.event.findMany();
-    return events.map(toDomain);
+    return events.map(eventRecordToDomain);
   }
 
   async getEventById(eventId: string): Promise<Event | null> {
-    const event = await prisma.event.findUnique({
-      where: { id: eventId },
-    });
-
-    return event ? toDomain(event) : null;
+    await ensureTestDemoFixture();
+    const prisma = getPrisma();
+    const row = await prisma.event.findUnique({ where: { id: eventId } });
+    return row ? eventRecordToDomain(row) : null;
   }
 
   async getEventsByIds(eventIds: string[]): Promise<Event[]> {
+    await ensureTestDemoFixture();
+    if (eventIds.length === 0) {
+      return [];
+    }
+    const prisma = getPrisma();
     const events = await prisma.event.findMany({
-      where: {
-        id: {
-          in: eventIds,
-        },
-      },
+      where: { id: { in: [...new Set(eventIds)] } },
     });
-
-    return events.map(toDomain);
+    return events.map(eventRecordToDomain);
   }
 
   async getEventsByOrganizerId(organizerId: string): Promise<Event[]> {
+    await ensureTestDemoFixture();
+    const prisma = getPrisma();
     const events = await prisma.event.findMany({
       where: { organizerId },
     });
-
-    return events.map(toDomain);
+    return events.map(eventRecordToDomain);
   }
 }
