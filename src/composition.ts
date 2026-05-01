@@ -7,18 +7,17 @@ import { CreateApp } from "./app";
 import { CreateAttendeeService } from "./rsvp/attendeeService";
 import { CreateAttendeeController } from "./rsvp/attendeeController";
 import type { IApp } from "./contracts";
-import { InMemoryEventRepository } from "./events/inMemoryEventRepository";
 import { CreateEventController } from "./events/eventController";
 import { CreateEventService } from "./events/eventService";
 import { CreateOrganizerDashboardService } from "./events/OrganizerDashboardService";
 import { OrganizerDashboardController } from "./events/OrganizerDashboardController";
+import { PrismaEventRepository } from "./events/prismaEventRepository";
+import { PrismaRSVPRepository } from "./events/prismaRSVPRepository";
 import { RSVPDashboardController } from "./rsvps/RSVPDashboardController";
 import { CreateRSVPDashboardService } from "./rsvps/RSVPDashboardService";
-import { prismaRSVPRepository } from "./rsvps/prismaRSVPRepository";
 import { CreateLoggingService } from "./service/LoggingService";
 import type { ILoggingService } from "./service/LoggingService";
 import { CreateRSVPService } from "./events/rsvpService";
-import { PrismaEventRepository } from "./events/prismaEventRepository";
 
 export function createComposedApp(logger?: ILoggingService): IApp {
   const resolvedLogger = logger ?? CreateLoggingService();
@@ -35,13 +34,12 @@ export function createComposedApp(logger?: ILoggingService): IApp {
     resolvedLogger
   );
 
-  // Event wiring
+  // Event wiring (Prisma — Feature 8 and shared event reads)
   const eventRepo = new PrismaEventRepository();
   const eventService = CreateEventService(eventRepo);
 
-  // RSVP wiring
-  const rsvpRepo = new prismaRSVPRepository();
-
+  // RSVP wiring — one Prisma repo for toggles, My RSVPs (Feature 7), organizer counts (Feature 8)
+  const rsvpRepo = new PrismaRSVPRepository();
   const rsvpService = CreateRSVPService(rsvpRepo, eventRepo);
 
   const eventController = CreateEventController(
@@ -62,17 +60,13 @@ export function createComposedApp(logger?: ILoggingService): IApp {
     resolvedLogger
   );
 
-  // RSVP dashboard wiring
-  const rsvpDashboardService = CreateRSVPDashboardService(
-    rsvpRepo,
-    eventRepo
-  );
-
+  // RSVP dashboard wiring (Feature 7)
+  const rsvpDashboardService = CreateRSVPDashboardService(rsvpRepo, eventRepo);
   const rsvpDashboardController = new RSVPDashboardController(
     rsvpDashboardService
   );
 
-  // Organizer dashboard wiring
+  // Organizer dashboard wiring (Feature 8)
   const organizerDashboardService = CreateOrganizerDashboardService(
     eventRepo,
     rsvpRepo
