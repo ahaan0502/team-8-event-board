@@ -68,7 +68,7 @@ function toDomainEvent(row: PrismaEventRow): Event {
   };
 }
 
-export class PrismaRSVPRepository implements RSVPRepository {
+export class prismaRSVPRepository implements RSVPRepository {
   // =====================
   // Core RSVP methods
   // =====================

@@ -27,4 +27,26 @@ model Event {
 
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
+
+  rsvps          Rsvp[]
+}
+
+enum RSVPStatus {
+  going
+  waitlisted
+  cancelled
+}
+
+model Rsvp {
+  id        String      @id @default(cuid())
+
+  eventId   String
+  userId    String
+
+  status    RSVPStatus
+  createdAt DateTime    @default(now())
+
+  event     Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId])
 }
