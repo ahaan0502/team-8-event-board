@@ -236,7 +236,8 @@ class EventService implements IEventService {
       const lower = query.toLowerCase();
       filtered = filtered.filter((event) =>
         event.title.toLowerCase().includes(lower) ||
-        event.description.toLowerCase().includes(lower)
+        event.description.toLowerCase().includes(lower) ||
+        event.location.toLowerCase().includes(lower)
       );
     }
 

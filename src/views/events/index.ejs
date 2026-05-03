@@ -1,62 +1,94 @@
 <h1 class="text-2xl font-bold mb-4">Upcoming Events</h1>
 
-<form
-  id="event-filter-form"
-  class="flex flex-wrap gap-3 mb-6 items-center"
-  hx-get="/events"
-  hx-target="#event-list"
-  hx-select="#event-list"
-  hx-swap="outerHTML"
-  hx-push-url="true"
+<div
+  x-data='{
+    query: <%- JSON.stringify(filters.query ?? "") %>,
+    category: <%- JSON.stringify(filters.category ?? "") %>,
+    timeframe: <%- JSON.stringify(filters.timeframe ?? "all") %>,
+    get hasFilters() { return this.category !== "" || this.timeframe !== "all"; },
+    clearFilters() {
+      this.category = "";
+      this.timeframe = "all";
+      this.$nextTick(() => htmx.trigger(document.getElementById("event-filter-form"), "submit"));
+    }
+  }'
 >
-  <!-- Search input with Alpine.js clear button (Feature 10 Sprint 4) -->
-  <div
-    class="relative flex-1 min-w-[200px]"
-    x-data='{ query: <%- JSON.stringify(filters.query ?? "") %> }'
+  <form
+    id="event-filter-form"
+    class="flex flex-wrap gap-3 mb-6 items-center"
+    hx-get="/events"
+    hx-target="#event-list"
+    hx-select="#event-list"
+    hx-swap="outerHTML"
+    hx-push-url="true"
   >
-    <input
-      type="text"
-      name="q"
-      x-model="query"
-      placeholder="Search events..."
-      class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm pr-8 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-      hx-get="/events"
-      hx-target="#event-list"
-      hx-select="#event-list"
-      hx-swap="outerHTML"
-      hx-push-url="true"
-      hx-trigger="keyup changed delay:400ms"
-      hx-include="#event-filter-form"
-    />
+    <!-- Search input (Feature 10) -->
+    <div class="relative flex-1 min-w-[200px]">
+      <input
+        type="text"
+        name="q"
+        x-model="query"
+        placeholder="Search events..."
+        class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm pr-8 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        hx-get="/events"
+        hx-target="#event-list"
+        hx-select="#event-list"
+        hx-swap="outerHTML"
+        hx-push-url="true"
+        hx-trigger="keyup changed delay:400ms"
+        hx-include="#event-filter-form"
+      />
+      <button
+        type="button"
+        x-show="query.trim().length > 0"
+        x-transition
+        @click="query = ''; $nextTick(() => htmx.trigger($el.closest('form'), 'submit'))"
+        class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 text-lg leading-none"
+        aria-label="Clear search"
+      >&times;</button>
+    </div>
+
+    <!-- Category filter (Feature 6) -->
+    <select
+      name="category"
+      x-model="category"
+      @change="$nextTick(() => htmx.trigger($el.closest('form'), 'submit'))"
+      :class="category !== '' ? 'border-blue-500 bg-blue-50 text-blue-700 ring-2 ring-blue-300' : 'border-slate-300 bg-white text-slate-700'"
+      class="border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+    >
+      <option value="">All Categories</option>
+      <option value="Tech">Tech</option>
+      <option value="Social">Social</option>
+      <option value="Entertainment">Entertainment</option>
+      <option value="Sports">Sports</option>
+      <option value="Academic">Academic</option>
+      <option value="Other">Other</option>
+    </select>
+
+    <!-- Timeframe filter (Feature 6) -->
+    <select
+      name="timeframe"
+      x-model="timeframe"
+      @change="$nextTick(() => htmx.trigger($el.closest('form'), 'submit'))"
+      :class="timeframe !== 'all' ? 'border-blue-500 bg-blue-50 text-blue-700 ring-2 ring-blue-300' : 'border-slate-300 bg-white text-slate-700'"
+      class="border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+    >
+      <option value="all">Any time</option>
+      <option value="week">This week</option>
+      <option value="weekend">This weekend</option>
+    </select>
+
+    <!-- Clear filters button (Feature 6 Alpine.js) -->
     <button
       type="button"
-      x-show="query.trim().length > 0"
+      x-show="hasFilters"
       x-transition
-      @click="query = ''; $nextTick(() => htmx.trigger($el.closest('form'), 'submit'))"
-      class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 text-lg leading-none"
-      aria-label="Clear search"
-    >&times;</button>
-  </div>
-
-  <select name="category" class="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-    <option value="">All Categories</option>
-    <option value="Tech" <%= filters.category === "Tech" ? "selected" : "" %>>Tech</option>
-    <option value="Social" <%= filters.category === "Social" ? "selected" : "" %>>Social</option>
-    <option value="Entertainment" <%= filters.category === "Entertainment" ? "selected" : "" %>>Entertainment</option>
-    <option value="Sports" <%= filters.category === "Sports" ? "selected" : "" %>>Sports</option>
-    <option value="Academic" <%= filters.category === "Academic" ? "selected" : "" %>>Academic</option>
-    <option value="Other" <%= filters.category === "Other" ? "selected" : "" %>>Other</option>
-  </select>
-
-  <select name="timeframe" class="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-    <option value="all" <%= filters.timeframe === "all" ? "selected" : "" %>>Any time</option>
-    <option value="week" <%= filters.timeframe === "week" ? "selected" : "" %>>This week</option>
-    <option value="weekend" <%= filters.timeframe === "weekend" ? "selected" : "" %>>This weekend</option>
-  </select>
-
-  <button type="submit" class="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700">
-    Filter
-  </button>
-</form>
+      @click="clearFilters()"
+      class="px-3 py-2 rounded-lg border border-slate-300 text-sm text-slate-600 hover:bg-slate-100 hover:border-slate-400"
+    >
+      Clear filters
+    </button>
+  </form>
+</div>
 
 <%- include("partials/event-list", { events, filters }) %>
