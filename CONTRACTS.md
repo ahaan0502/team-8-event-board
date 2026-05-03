@@ -27,6 +27,7 @@ Shared Types
         type EventFilters = {
             category?: string
             timeframe?: "all" | "week" | "weekend"
+            query?: string
         }
 
     EventStatus
@@ -152,6 +153,7 @@ Event Contracts
         Returns: List of published events
 
         Errors: ValidationError: invalid filter values
+                InvalidSearchError: search query exceeds 200 characters
 
     Method: archiveExpiredEvents
 
