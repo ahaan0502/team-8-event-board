@@ -156,7 +156,7 @@ class EventController implements IEventController {
     return;
   }
 
-  res.render("partials/editForm", {
+  res.render("events/edit", {
     event: result.value,
     session,
     pageError,
@@ -221,7 +221,7 @@ class EventController implements IEventController {
     res.status(status);
 
     if (isHx) {
-      res.render("events/edit", {
+      res.render("partials/editForm", {
         event: {
           id: eventId,
           title: input?.title ?? "",
