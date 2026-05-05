@@ -25,16 +25,7 @@
   <% } %>
 
   <% if (user && user.role === "user") { %>
-  <div id="rsvp-section">
-    <button
-      hx-post="/events/<%= event.id %>/rsvp"
-      hx-target="#rsvp-section"
-      hx-swap="outerHTML"
-    >
-      Toggle RSVP
-    </button>
-    <p>Your RSVP: <%= event.rsvpStatus || "none" %></p>
-  </div>
+    <%- include('partials/rsvpSection', { event }) %>
   <% } %>
 
   <div
