@@ -7,10 +7,14 @@
     </p>
   </div>
 
-  <div>
-    <p class="text-sm text-gray-600">
-      <%= event.startDatetime.toLocaleString() %>
+  <div class="bg-white p-4 rounded-xl shadow">
+    <p class="text-gray-700 whitespace-pre-line">
+      <%= event.description %>
     </p>
+  </div>
+
+  <div class="text-sm text-gray-600">
+    <p><%= event.startDatetime.toLocaleString() %></p>
   </div>
 
 </div>
