@@ -5,19 +5,23 @@
     hx-swap="outerHTML"
     class="
       px-4 py-2 rounded-lg font-semibold transition
-      <% if (event.rsvpStatus === 'going') { %>
-        bg-green-500 text-white
-      <% } else if (event.rsvpStatus === 'waitlisted') { %>
-        bg-yellow-400 text-black
-      <% } else { %>
-        bg-gray-300 text-black
-      <% } %>
+      <%= event.rsvpStatus === 'going'
+        ? 'bg-green-500 text-white'
+        : event.rsvpStatus === 'waitlisted'
+        ? 'bg-yellow-400 text-black'
+        : 'bg-gray-300 text-black'
+      %>
     "
   >
-    Toggle RSVP
+    <%= event.rsvpStatus === 'going'
+      ? 'Going ✓'
+      : event.rsvpStatus === 'waitlisted'
+      ? 'Waitlisted'
+      : 'RSVP'
+    %>
   </button>
 
-  <p>
+  <p class="text-sm text-gray-600 mt-2">
     Your RSVP: <%= event.rsvpStatus || "none" %>
   </p>
 </div>
