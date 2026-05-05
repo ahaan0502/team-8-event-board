@@ -3,8 +3,19 @@
   <p>No upcoming RSVPs.</p>
 <% } %>
 <% dashboard.upcoming.forEach(item => { %>
-  <div>
+  <div class="mb-3 flex flex-wrap items-center gap-2">
     <strong><%= item.event.title %></strong>
+    <% if (item.rsvp.status === "going" || item.rsvp.status === "waitlisted") { %>
+      <button
+        type="button"
+        class="px-2 py-1 text-sm rounded border border-slate-300 bg-white hover:bg-slate-50"
+        hx-post="/events/<%= item.event.id %>/rsvp"
+        hx-swap="none"
+        hx-on::after-request="if (event.detail.successful) htmx.ajax('GET', '/my-rsvps', { target: '#my-rsvps-sections', swap: 'innerHTML' })"
+      >
+        Cancel RSVP
+      </button>
+    <% } %>
   </div>
 <% }) %>
 
