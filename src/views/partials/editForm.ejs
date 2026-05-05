@@ -1,0 +1,81 @@
+<div id="edit-form" class="max-w-xl mx-auto bg-white p-6 rounded-xl shadow" x-data="{ changed: false }">
+  <form
+    hx-post="/events/<%= event.id %>"
+    hx-target="#edit-form"
+    hx-swap="outerHTML"
+    x-on:input="changed = true"
+    x-on:submit="changed = false"
+  >
+    <div class="mb-4">
+      <label class="block text-sm font-medium mb-1">Title</label>
+      <input class="w-full border rounded p-2" type="text" name="title" value="<%= event.title %>" required />
+    </div>
+
+    <div class="mb-4">
+      <label class="block text-sm font-medium mb-1">Description</label>
+      <textarea class="w-full border rounded p-2" name="description" required><%= event.description %></textarea>
+    </div>
+
+    <div class="mb-4">
+      <label class="block text-sm font-medium mb-1">Location</label>
+      <input class="w-full border rounded p-2" type="text" name="location" value="<%= event.location %>" required />
+    </div>
+
+    <div class="mb-4">
+      <label class="block text-sm font-medium mb-1">Category</label>
+      <input class="w-full border rounded p-2" type="text" name="category" value="<%= event.category %>" required />
+    </div>
+
+    <div class="mb-4">
+      <label class="block text-sm font-medium mb-1">Start Time</label>
+      <input 
+        class="w-full border rounded p-2"
+        type="datetime-local"
+        name="startTime"
+        value="<%= event.startDatetime ? new Date(event.startDatetime).toISOString().slice(0,16) : '' %>"
+        required
+      />
+    </div>
+
+    <div class="mb-4">
+      <label class="block text-sm font-medium mb-1">End Time</label>
+      <input 
+        class="w-full border rounded p-2"
+        type="datetime-local"
+        name="endTime"
+        value="<%= event.endDatetime ? new Date(event.endDatetime).toISOString().slice(0,16) : '' %>"
+        required
+      />
+    </div>
+
+    <div class="mb-4">
+      <label class="block text-sm font-medium mb-1">Capacity</label>
+      <input 
+        class="w-full border rounded p-2"
+        type="number"
+        name="capacity"
+        min="1"
+        value="<%= event.capacity %>"
+        required
+      />
+    </div>
+
+    <button class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition">
+      Update Event
+    </button>
+  </form>
+
+  <% if (pageError) { %>
+    <p class="text-red-500 mt-2"><%= pageError %></p>
+  <% } %>
+</div>
+
+<script>
+  window.addEventListener("beforeunload", function (e) {
+    const el = document.querySelector("#edit-form");
+    if (el && el.__x && el.__x.$data.changed) {
+      e.preventDefault();
+      e.returnValue = "";
+    }
+  });
+</script>

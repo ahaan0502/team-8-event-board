@@ -13,6 +13,30 @@
     </p>
   </div>
 
+  <% const user = session?.authenticatedUser ?? null; %>
+
+  <% if (user && (user.userId === event.organizerId || user.role === "admin")) { %>
+    <a
+      href="/events/<%= event.id %>/edit"
+      class="inline-flex items-center gap-2 mt-3 px-4 py-2 rounded-lg bg-blue-600 text-white font-medium shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+    >
+      Edit Event
+    </a>
+  <% } %>
+
+  <% if (user && user.role === "user") { %>
+  <div id="rsvp-section">
+    <button
+      hx-post="/events/<%= event.id %>/rsvp"
+      hx-target="#rsvp-section"
+      hx-swap="outerHTML"
+    >
+      Toggle RSVP
+    </button>
+    <p>Your RSVP: <%= event.rsvpStatus || "none" %></p>
+  </div>
+  <% } %>
+
   <div
     x-data="{
       start: new Date('<%= event.startDatetime.toISOString() %>'),
