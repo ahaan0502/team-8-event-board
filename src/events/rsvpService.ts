@@ -27,11 +27,6 @@ class RSVPService implements IRSVPService {
       return Err(NotFoundError("Event not found"));
     }
 
-    /*// Organizer cannot RSVP
-    if (event.organizerId === userId) {
-      return Err(UnauthorizedError("Organizer cannot RSVP"));
-    }*/
-
     // Cannot RSVP to invalid events
     if (event.status === "cancelled" || event.status === "past") {
       return Err(ValidationError("Cannot RSVP to this event"));
