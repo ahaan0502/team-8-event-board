@@ -34,6 +34,13 @@ export async function ensureTestDemoFixture(): Promise<void> {
 async function seedTestDemoData(client: PrismaClient): Promise<void> {
   const now = new Date();
 
+  const daysFromNow = (days: number, hour: number, minute = 0) => {
+    const date = new Date(now);
+    date.setDate(date.getDate() + days);
+    date.setHours(hour, minute, 0, 0);
+    return date;
+  };
+
   await client.rsvp.deleteMany();
   await client.event.deleteMany();
 
@@ -46,8 +53,8 @@ async function seedTestDemoData(client: PrismaClient): Promise<void> {
       category: "Tech",
       status: EventStatus.published,
       capacity: 20,
-      startDatetime: new Date("2026-04-20T18:00:00"),
-      endDatetime: new Date("2026-04-20T20:00:00"),
+      startDatetime: daysFromNow(7, 18),
+      endDatetime: daysFromNow(7, 20),
       organizerId: "user-staff",
     },
     {
@@ -58,8 +65,8 @@ async function seedTestDemoData(client: PrismaClient): Promise<void> {
       category: "Social",
       status: EventStatus.draft,
       capacity: 40,
-      startDatetime: new Date("2026-04-22T17:00:00"),
-      endDatetime: new Date("2026-04-22T19:00:00"),
+      startDatetime: daysFromNow(9, 17),
+      endDatetime: daysFromNow(9, 19),
       organizerId: "user-staff",
     },
     {
@@ -70,8 +77,8 @@ async function seedTestDemoData(client: PrismaClient): Promise<void> {
       category: "Entertainment",
       status: EventStatus.published,
       capacity: 100,
-      startDatetime: new Date("2026-04-25T19:00:00"),
-      endDatetime: new Date("2026-04-25T21:00:00"),
+      startDatetime: daysFromNow(11, 19),
+      endDatetime: daysFromNow(11, 21),
       organizerId: "user-staff",
     },
   ];
