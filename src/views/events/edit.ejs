@@ -1,34 +1,35 @@
-<h1>Edit Event</h1>
+<h1 class="text-2xl font-bold mb-4">Edit Event</h1>
 
-<div id="edit-form">
+<div id="edit-form" class="max-w-xl mx-auto bg-white p-6 rounded-xl shadow">
   <form
     hx-post="/events/<%= event.id %>"
     hx-target="#edit-form"
     hx-swap="outerHTML"
   >
-    <div>
-      <label>Title</label>
-      <input type="text" name="title" value="<%= event.title %>" required />
+    <div class="mb-4">
+      <label class="block text-sm font-medium mb-1">Title</label>
+      <input class="w-full border rounded p-2" type="text" name="title" value="<%= event.title %>" required />
     </div>
 
-    <div>
-      <label>Description</label>
-      <textarea name="description" required><%= event.description %></textarea>
+    <div class="mb-4">
+      <label class="block text-sm font-medium mb-1">Description</label>
+      <textarea class="w-full border rounded p-2" name="description" required><%= event.description %></textarea>
     </div>
 
-    <div>
-      <label>Location</label>
-      <input type="text" name="location" value="<%= event.location %>" required />
+    <div class="mb-4">
+      <label class="block text-sm font-medium mb-1">Location</label>
+      <input class="w-full border rounded p-2" type="text" name="location" value="<%= event.location %>" required />
     </div>
 
-    <div>
-      <label>Category</label>
-      <input type="text" name="category" value="<%= event.category %>" required />
+    <div class="mb-4">
+      <label class="block text-sm font-medium mb-1">Category</label>
+      <input class="w-full border rounded p-2" type="text" name="category" value="<%= event.category %>" required />
     </div>
 
-    <div>
-      <label>Start Time</label>
-      <input
+    <div class="mb-4">
+      <label class="block text-sm font-medium mb-1">Start Time</label>
+      <input 
+        class="w-full border rounded p-2"
         type="datetime-local"
         name="startTime"
         value="<%= event.startDatetime ? new Date(event.startDatetime).toISOString().slice(0,16) : '' %>"
@@ -36,9 +37,10 @@
       />
     </div>
 
-    <div>
-      <label>End Time</label>
-      <input
+    <div class="mb-4">
+      <label class="block text-sm font-medium mb-1">End Time</label>
+      <input 
+        class="w-full border rounded p-2"
         type="datetime-local"
         name="endTime"
         value="<%= event.endDatetime ? new Date(event.endDatetime).toISOString().slice(0,16) : '' %>"
@@ -46,9 +48,10 @@
       />
     </div>
 
-    <div>
-      <label>Capacity</label>
-      <input
+    <div class="mb-4">
+      <label class="block text-sm font-medium mb-1">Capacity</label>
+      <input 
+        class="w-full border rounded p-2"
         type="number"
         name="capacity"
         min="1"
@@ -57,7 +60,9 @@
       />
     </div>
 
-    <button type="submit">Update Event</button>
+    <button class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition">
+      Update Event
+    </button>
   </form>
 
   <% if (pageError) { %>
