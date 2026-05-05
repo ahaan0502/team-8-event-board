@@ -9,6 +9,7 @@ import {
 import type { ILoggingService } from "../service/LoggingService";
 import type { EventError } from "./errors";
 import { IRSVPService } from "./rsvpService";
+import { RSVP } from "./rsvpRepository";
 
 export interface IEventController {
   showCreateEvent(res: Response, session: IAppBrowserSession, pageError?: string | null): Promise<void>;
@@ -131,8 +132,21 @@ class EventController implements IEventController {
     return;
   }
 
+  const event = result.value;
+
+  let rsvpStatus: string | null = null;
+
+  if (user) {
+    const rsvps = await this.rsvpService.getByEvent(eventId);
+    const userRsvp = rsvps.find((r: RSVP) => r.userId === user.userId);
+    rsvpStatus = userRsvp ? userRsvp.status : null;
+  }
+  
   res.render("events/detail", {
-    event: result.value,
+    event: {
+      ...event,
+      rsvpStatus,
+    },
     session,
     pageError: null,
   });
@@ -285,8 +299,18 @@ class EventController implements IEventController {
       return;
     }
 
+    const event = eventResult.value;
+
+    const rsvps = await this.rsvpService.getByEvent(eventId);
+    const userRsvp = rsvps.find((r: RSVP) => r.userId === user.userId);
+
+    const rsvpStatus = userRsvp ? userRsvp.status : null;
+
     res.render("events/partials/rsvpSection", {
-      event: eventResult.value,
+      event: {
+        ...event,
+        rsvpStatus,
+      },
       layout: false,
     });
   }
