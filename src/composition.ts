@@ -82,6 +82,7 @@ export function createComposedApp(logger?: ILoggingService): IApp {
     rsvpDashboardController,
     organizerDashboardController,
     attendeeController,
+    eventService,
     resolvedLogger
   );
 }
