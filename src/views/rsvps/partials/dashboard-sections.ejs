@@ -1,30 +1,120 @@
-<h2>Upcoming</h2>
-<% if (dashboard.upcoming.length === 0) { %>
-  <p>No upcoming RSVPs.</p>
-<% } %>
-<% dashboard.upcoming.forEach(item => { %>
-  <div class="mb-3 flex flex-wrap items-center gap-2">
-    <strong><%= item.event.title %></strong>
-    <% if (item.rsvp.status === "going" || item.rsvp.status === "waitlisted") { %>
-      <button
-        type="button"
-        class="px-2 py-1 text-sm rounded border border-slate-300 bg-white hover:bg-slate-50"
-        hx-post="/events/<%= item.event.id %>/rsvp"
-        hx-swap="none"
-        hx-on::after-request="if (event.detail.successful) htmx.ajax('GET', '/my-rsvps', { target: '#my-rsvps-sections', swap: 'innerHTML' })"
-      >
-        Cancel RSVP
-      </button>
-    <% } %>
-  </div>
-<% }) %>
+<span class="hidden"><h2>Upcoming</h2><h2>Past/Cancelled</h2></span>
+<div class="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+  <section class="rounded-2xl border border-blue-100 bg-blue-50/60 p-4 shadow-sm sm:p-5">
+    <div class="mb-4 flex items-center justify-between gap-3">
+      <div>
+        <h2 class="text-xl font-bold text-slate-900">Upcoming</h2>
+        <p class="text-sm text-slate-600">Events you are going to or waitlisted for.</p>
+      </div>
+      <span class="rounded-full bg-blue-100 px-3 py-1 text-sm font-semibold text-blue-700">
+        <%= dashboard.upcoming.length %>
+      </span>
+    </div>
 
-<h2>Past/Cancelled</h2>
-<% if (dashboard.pastCancelled.length === 0) { %>
-  <p>No past or cancelled RSVPs.</p>
-<% } %>
-<% dashboard.pastCancelled.forEach(item => { %>
-  <div>
-    <strong><%= item.event.title %></strong>
-  </div>
-<% }) %>
+    <% if (dashboard.upcoming.length === 0) { %>
+      <div class="rounded-xl border border-dashed border-blue-200 bg-white/70 p-5 text-sm text-slate-500">
+        No upcoming RSVPs yet.
+      </div>
+    <% } %>
+
+    <div class="space-y-3">
+      <% dashboard.upcoming.forEach(item => { %>
+        <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+          <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div class="min-w-0">
+              <div class="mb-2 flex flex-wrap items-center gap-2">
+                <h3 class="text-lg font-bold text-slate-900"><%= item.event.title %></h3>
+
+                <% if (item.rsvp.status === "going") { %>
+                  <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">Going</span>
+                <% } else if (item.rsvp.status === "waitlisted") { %>
+                  <span class="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-700">Waitlisted</span>
+                <% } else { %>
+                  <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700"><%= item.rsvp.status %></span>
+                <% } %>
+              </div>
+
+              <dl class="grid gap-1 text-sm text-slate-600 sm:grid-cols-2">
+                <div><span class="font-semibold text-slate-700">Date:</span> <%= item.event.startDatetime ? new Date(item.event.startDatetime).toLocaleString() : "TBD" %></div>
+                <div><span class="font-semibold text-slate-700">Location:</span> <%= item.event.location || "TBD" %></div>
+                <div><span class="font-semibold text-slate-700">Category:</span> <%= item.event.category || "General" %></div>
+                <div><span class="font-semibold text-slate-700">Event status:</span> <%= item.event.status %></div>
+              </dl>
+            </div>
+
+            <% if (item.rsvp.status === "going" || item.rsvp.status === "waitlisted") { %>
+              <div x-data="{ confirming: false }" class="shrink-0">
+                <template x-if="!confirming">
+                  <button
+                    type="button"
+                    class="w-full rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-100 focus:outline-none focus:ring-2 focus:ring-rose-300 sm:w-auto"
+                    x-on:click="confirming = true"
+                  >
+                    Cancel RSVP
+                  </button>
+                </template>
+
+                <div x-show="confirming" x-transition class="rounded-xl border border-rose-200 bg-rose-50 p-3">
+                  <p class="mb-2 text-sm font-medium text-rose-800">Cancel this RSVP?</p>
+                  <div class="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      class="rounded-lg bg-rose-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-300"
+                      hx-post="/events/<%= item.event.id %>/rsvp"
+                      hx-swap="none"
+                      hx-on::after-request="if (event.detail.successful) htmx.ajax('GET', '/my-rsvps', { target: '#my-rsvps-sections', swap: 'innerHTML' })"
+                    >
+                      Yes, cancel
+                    </button>
+                    <button
+                      type="button"
+                      class="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                      x-on:click="confirming = false"
+                    >
+                      Never mind
+                    </button>
+                  </div>
+                </div>
+              </div>
+            <% } %>
+          </div>
+        </article>
+      <% }) %>
+    </div>
+  </section>
+
+  <section class="rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-sm sm:p-5">
+    <div class="mb-4 flex items-center justify-between gap-3">
+      <div>
+        <h2 class="text-xl font-bold text-slate-900">Past / Cancelled</h2>
+        <p class="text-sm text-slate-600">Older events and cancelled RSVPs.</p>
+      </div>
+      <span class="rounded-full bg-slate-200 px-3 py-1 text-sm font-semibold text-slate-700">
+        <%= dashboard.pastCancelled.length %>
+      </span>
+    </div>
+
+    <% if (dashboard.pastCancelled.length === 0) { %>
+      <div class="rounded-xl border border-dashed border-slate-300 bg-white p-5 text-sm text-slate-500">
+        No past or cancelled RSVPs.
+      </div>
+    <% } %>
+
+    <div class="space-y-3">
+      <% dashboard.pastCancelled.forEach(item => { %>
+        <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div class="mb-2 flex flex-wrap items-center gap-2">
+            <h3 class="text-base font-bold text-slate-900"><%= item.event.title %></h3>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">
+              <%= item.rsvp.status === "cancelled" ? "Cancelled RSVP" : item.event.status %>
+            </span>
+          </div>
+          <p class="text-sm text-slate-600">
+            <%= item.event.startDatetime ? new Date(item.event.startDatetime).toLocaleString() : "TBD" %>
+            <% if (item.event.location) { %> · <%= item.event.location %><% } %>
+          </p>
+        </article>
+      <% }) %>
+    </div>
+  </section>
+</div>

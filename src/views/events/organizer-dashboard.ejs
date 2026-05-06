@@ -1,16 +1,22 @@
-<h1>Organizer Dashboard</h1>
+<section class="space-y-6">
+  <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <p class="text-sm font-semibold uppercase tracking-wide text-purple-600">Organizer Dashboard</p>
+      <h1 class="text-3xl font-bold text-slate-900">Manage Events</h1>
+      <p class="mt-1 text-slate-600">Review event status, attendance, and quick actions.</p>
+    </div>
 
-<div class="mb-4">
-  <button
-    class="px-3 py-2 rounded bg-slate-200 hover:bg-slate-300"
-    hx-get="/organizer/events"
-    hx-target="#organizer-dashboard-sections"
-    hx-swap="innerHTML"
-  >
-    Refresh
-  </button>
-</div>
+    <button
+      class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-purple-400"
+      hx-get="/organizer/events"
+      hx-target="#organizer-dashboard-sections"
+      hx-swap="innerHTML"
+    >
+      Refresh
+    </button>
+  </div>
 
-<div id="organizer-dashboard-sections">
-  <%- include("partials/dashboard-sections", { dashboard }) %>
-</div>
+  <div id="organizer-dashboard-sections">
+    <%- include("partials/dashboard-sections", { dashboard }) %>
+  </div>
+</section>

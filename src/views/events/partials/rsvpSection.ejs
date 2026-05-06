@@ -21,12 +21,12 @@
         %>
       "
     >
-      <%= event.rsvpStatus === 'going'
+    Toggle RSVP (<%= event.rsvpStatus === 'going'
         ? 'Going ✓'
         : event.rsvpStatus === 'waitlisted'
         ? 'Waitlisted'
         : 'RSVP'
-      %>
+      %>)
     </button>
 
   </div>
