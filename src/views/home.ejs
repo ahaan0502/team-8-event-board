@@ -59,3 +59,32 @@
 <% if (pageError) { %>
   <%- include("partials/error", { message: pageError }) %>
 <% } %>
+
+<section class="p-6 border border-slate-200 rounded-2xl bg-white shadow-lg">
+  <h2 class="text-xl font-semibold text-slate-800 mb-1">Upcoming This Week</h2>
+  <p class="text-sm text-slate-400 mb-4">Published events starting within the next 7 days.</p>
+
+  <% if (upcomingEvents.length === 0) { %>
+    <p class="text-slate-400 text-sm italic">No events coming up this week.</p>
+  <% } else { %>
+    <ul class="divide-y divide-slate-100">
+      <% for (const event of upcomingEvents) { %>
+        <li>
+          <a
+            href="/events/<%= event.id %>"
+            class="flex items-center justify-between py-3 px-2 rounded-lg hover:bg-slate-50 transition no-underline group"
+          >
+            <div>
+              <p class="font-medium text-slate-800 group-hover:text-blue-600 transition"><%= event.title %></p>
+              <p class="text-xs text-slate-400 mt-0.5"><%= event.location %> &middot; <%= event.category %></p>
+            </div>
+            <div class="text-right shrink-0 ml-4">
+              <p class="text-sm text-slate-600"><%= new Date(event.startDatetime).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }) %></p>
+              <p class="text-xs text-slate-400"><%= new Date(event.startDatetime).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }) %></p>
+            </div>
+          </a>
+        </li>
+      <% } %>
+    </ul>
+  <% } %>
+</section>

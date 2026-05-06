@@ -21,6 +21,7 @@ import type { IEventController } from "./events/eventController";
 import type { RSVPDashboardController } from './rsvps/RSVPDashboardController'
 import { OrganizerDashboardController } from "./events/OrganizerDashboardController";
 import type { IAttendeeController } from "./rsvp/attendeeController";
+import type { IEventService } from "./events/eventService";
 
 type AsyncRequestHandler = RequestHandler;
 
@@ -43,6 +44,7 @@ class ExpressApp implements IApp {
     private readonly rsvpDashboardController: RSVPDashboardController,
     private readonly organizerDashboardController: OrganizerDashboardController,
     private readonly attendeeController: IAttendeeController,
+    private readonly eventService: IEventService,
     private readonly logger: ILoggingService,
 ) {
     this.app = express();
@@ -490,7 +492,9 @@ this.app.get(
 
         const browserSession = recordPageView(sessionStore(req));
         this.logger.info(`GET /home for ${browserSession.browserLabel}`);
-        res.render("home", { session: browserSession, pageError: null });
+        const upcomingResult = await this.eventService.listPublishedEvents({ timeframe: "week" });
+        const upcomingEvents = upcomingResult.ok ? upcomingResult.value : [];
+        res.render("home", { session: browserSession, pageError: null, upcomingEvents });
       }),
     );
 
@@ -517,6 +521,7 @@ export function CreateApp(
   rsvpDashboardController: RSVPDashboardController,
   organizerDashboardController: OrganizerDashboardController,
   attendeeController: IAttendeeController,
+  eventService: IEventService,
   logger: ILoggingService,
 ): IApp {
   return new ExpressApp(
@@ -525,6 +530,7 @@ export function CreateApp(
     rsvpDashboardController,
     organizerDashboardController,
     attendeeController,
+    eventService,
     logger
   );
 }
