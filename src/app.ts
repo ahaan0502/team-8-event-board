@@ -494,7 +494,11 @@ this.app.get(
         this.logger.info(`GET /home for ${browserSession.browserLabel}`);
         const upcomingResult = await this.eventService.listPublishedEvents({ timeframe: "week" });
         const upcomingEvents = upcomingResult.ok ? upcomingResult.value : [];
-        res.render("home", { session: browserSession, pageError: null, upcomingEvents });
+        const allResult = await this.eventService.listPublishedEvents({ timeframe: "all" });
+        const recentlyAdded = allResult.ok
+          ? [...allResult.value].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()).slice(0, 5)
+          : [];
+        res.render("home", { session: browserSession, pageError: null, upcomingEvents, recentlyAdded });
       }),
     );
 
