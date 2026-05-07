@@ -22,6 +22,7 @@
     >
       Edit Event
     </a>
+    <%- include('partials/organizer-controls', { event, session }) %>
   <% } %>
 
   <% if (user && user.role === "user") { %>
