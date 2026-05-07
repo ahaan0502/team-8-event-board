@@ -1,4 +1,4 @@
-<section class="mb-5 p-6 border border-slate-200 rounded-2xl bg-gradient-to-b from-white to-slate-50 shadow-lg">
+<section class="mb-6 p-6 border border-slate-200 rounded-2xl bg-gradient-to-b from-white to-slate-50 shadow-lg">
   <h1 class="text-3xl font-bold text-slate-900 mb-3">Welcome to Local Event Board</h1>
   <p class="text-slate-500">
     Discover and RSVP to local events, or create and manage your own.
@@ -60,12 +60,12 @@
   <%- include("partials/error", { message: pageError }) %>
 <% } %>
 
-<section class="p-6 border border-slate-200 rounded-2xl bg-white shadow-lg">
+<section class="mb-6 p-6 border border-slate-200 rounded-2xl bg-white shadow-lg">
   <h2 class="text-xl font-semibold text-slate-800 mb-1">Upcoming This Week</h2>
   <p class="text-sm text-slate-400 mb-4">Published events starting within the next 7 days.</p>
 
   <% if (upcomingEvents.length === 0) { %>
-    <p class="text-slate-400 text-sm italic">No events coming up this week.</p>
+    <p class="text-slate-400 text-sm italic">No events coming up this week. <a href="/events" class="text-blue-600 hover:underline">Browse all events</a>.</p>
   <% } else { %>
     <ul class="divide-y divide-slate-100">
       <% for (const event of upcomingEvents) { %>
@@ -86,5 +86,33 @@
         </li>
       <% } %>
     </ul>
+  <% } %>
+</section>
+
+<section class="p-6 border border-slate-200 rounded-2xl bg-white shadow-lg">
+  <h2 class="text-xl font-semibold text-slate-800 mb-1">Recently Added</h2>
+  <p class="text-sm text-slate-400 mb-4">The latest published events on the board.</p>
+
+  <% if (recentlyAdded.length === 0) { %>
+    <p class="text-slate-400 text-sm italic">No published events yet.</p>
+  <% } else { %>
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <% for (const event of recentlyAdded) { %>
+        <a
+          href="/events/<%= event.id %>"
+          class="flex flex-col justify-between p-5 rounded-2xl border border-slate-200 bg-slate-50 hover:bg-blue-50 hover:border-blue-200 hover:shadow-md transition no-underline group"
+        >
+          <div>
+            <span class="inline-block text-xs font-medium text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full mb-2"><%= event.category %></span>
+            <p class="text-base font-semibold text-slate-900 group-hover:text-blue-700 transition leading-snug"><%= event.title %></p>
+            <p class="text-sm text-slate-500 mt-1"><%= event.location %></p>
+          </div>
+          <div class="mt-4 pt-3 border-t border-slate-200 flex items-center justify-between">
+            <p class="text-sm font-medium text-slate-700"><%= new Date(event.startDatetime).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }) %></p>
+            <p class="text-xs text-slate-400">Added <%= new Date(event.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) %></p>
+          </div>
+        </a>
+      <% } %>
+    </div>
   <% } %>
 </section>
