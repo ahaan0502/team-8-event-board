@@ -1,0 +1,53 @@
+<div
+  x-data="{ open: true }"
+  x-init="$el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })"
+  class="p-5 border border-slate-200 rounded-2xl bg-white shadow-lg"
+>
+  <div class="flex items-center justify-between mb-4">
+    <h2 class="text-base font-semibold text-slate-700">Attendee List</h2>
+    <div class="flex items-center gap-3">
+      <p class="text-xs text-slate-400">Only visible to you and admins.</p>
+      <button
+        @click="open = !open"
+        class="text-sm text-slate-500 hover:text-slate-700 cursor-pointer border-0 bg-transparent"
+        x-text="open ? 'Hide' : 'Show'"
+      ></button>
+    </div>
+  </div>
+
+  <div x-show="open" x-transition>
+    <%
+      const groups = [
+        { key: "going",      label: "Going",      color: "bg-green-100 text-green-800 border-green-200" },
+        { key: "waitlisted", label: "Waitlisted",  color: "bg-yellow-100 text-yellow-800 border-yellow-200" },
+        { key: "cancelled",  label: "Cancelled",   color: "bg-red-100 text-red-800 border-red-200" },
+      ];
+      const total = attendees.going.length + attendees.waitlisted.length + attendees.cancelled.length;
+    %>
+
+    <% if (total === 0) { %>
+      <p class="text-center text-slate-400 text-sm py-4">No RSVPs yet for this event.</p>
+    <% } %>
+
+    <% for (const group of groups) { %>
+      <% if (attendees[group.key].length > 0) { %>
+        <div class="mb-4 last:mb-0">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="px-2.5 py-0.5 rounded-full border text-xs font-medium <%= group.color %>">
+              <%= group.label %>
+            </span>
+            <span class="text-slate-400 text-xs"><%= attendees[group.key].length %> <%= attendees[group.key].length === 1 ? 'person' : 'people' %></span>
+          </div>
+          <ul class="divide-y divide-slate-100 border border-slate-100 rounded-xl overflow-hidden">
+            <% for (const entry of attendees[group.key]) { %>
+              <li class="flex items-center justify-between px-4 py-2.5 text-sm bg-white hover:bg-slate-50 transition-colors">
+                <span class="font-medium text-slate-800"><%= entry.displayName %></span>
+                <span class="text-slate-400 text-xs"><%= new Date(entry.createdAt).toLocaleDateString() %></span>
+              </li>
+            <% } %>
+          </ul>
+        </div>
+      <% } %>
+    <% } %>
+  </div>
+</div>

@@ -9,6 +9,7 @@ import {
 import type { ILoggingService } from "../service/LoggingService";
 import type { EventError } from "./errors";
 import { IRSVPService } from "./rsvpService";
+import { RSVP } from "./rsvpRepository";
 
 export interface IEventController {
   showCreateEvent(res: Response, session: IAppBrowserSession, pageError?: string | null): Promise<void>;
@@ -35,7 +36,6 @@ class EventController implements IEventController {
     case "InvalidTimeRangeError":
     case "InvalidCapacityError":
     case "InvalidStateError":
-    case "InvalidSearchError":
       return 400;
 
     case "NotFoundError":
@@ -113,8 +113,7 @@ class EventController implements IEventController {
 
   const result = await this.service.getEventById(
     eventId,
-    user?.userId,
-    user?.role
+    user?.userId
   );
 
   if (result.ok === false) {
@@ -133,8 +132,21 @@ class EventController implements IEventController {
     return;
   }
 
+  const event = result.value;
+
+  let rsvpStatus: string | null = null;
+
+  if (user) {
+    const rsvps = await this.rsvpService.getByEvent(eventId);
+    const userRsvp = rsvps.find((r: RSVP) => r.userId === user.userId);
+    rsvpStatus = userRsvp ? userRsvp.status : null;
+  }
+  
   res.render("events/detail", {
-    event: result.value,
+    event: {
+      ...event,
+      rsvpStatus,
+    },
     session,
     pageError: null,
   });
@@ -223,7 +235,7 @@ class EventController implements IEventController {
     res.status(status);
 
     if (isHx) {
-      res.render("events/edit", {
+      res.render("partials/editForm", {
         event: {
           id: eventId,
           title: input?.title ?? "",
@@ -250,7 +262,7 @@ class EventController implements IEventController {
     const isHx = res.req?.get("HX-Request") === "true";
 
     if (isHx) {
-      res.render("events/edit", {
+      res.render("partials/editForm", {
         event: result.value,
         session,
         pageError: null,
@@ -287,8 +299,18 @@ class EventController implements IEventController {
       return;
     }
 
+    const event = eventResult.value;
+
+    const rsvps = await this.rsvpService.getByEvent(eventId);
+    const userRsvp = rsvps.find((r: RSVP) => r.userId === user.userId);
+
+    const rsvpStatus = userRsvp ? userRsvp.status : null;
+
     res.render("events/partials/rsvpSection", {
-      event: eventResult.value,
+      event: {
+        ...event,
+        rsvpStatus,
+      },
       layout: false,
     });
   }

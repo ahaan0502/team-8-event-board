@@ -1,69 +1,60 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <title>Create Event</title>
-   <script>
-  document.addEventListener("htmx:beforeSwap", function (e) {
-    if (e.detail.xhr.status === 400 || e.detail.xhr.status === 403) {
-      e.detail.shouldSwap = true;
-      e.detail.isError = false;
-    }
-  });
-</script>
-  </head>
+<div class="max-w-2xl mx-auto p-4">
+  <h1 class="text-2xl font-bold mb-6">Create Event</h1>
 
-  <body>
-    <h1>Create Event</h1>
+  <form method="POST" action="/events" class="space-y-4 bg-white p-6 rounded-2xl shadow">
 
-    <div id="form-error">
-      <% if (pageError) { %>
-        <p style="color: red;"><%= pageError %></p>
-      <% } %>
+    <div>
+      <label class="block text-sm font-medium mb-1">Title</label>
+      <input type="text" name="title"
+        class="w-full border rounded-lg px-3 py-2 focus:ring focus:ring-blue-200 focus:outline-none" />
     </div>
 
-    <form
-      method="POST"
-      action="/events"
-      hx-post="/events"
-      hx-target="#form-error"
-      hx-swap="innerHTML"
-    >
-      <div>
-        <label>Title</label>
-        <input type="text" name="title" required />
-      </div>
+    <div x-data="{ count: 0, max: 500 }">
+      <label class="block text-sm font-medium mb-1">Description</label>
 
-      <div>
-        <label>Description</label>
-        <textarea name="description" required></textarea>
-      </div>
+      <textarea name="description" maxlength="500"
+        class="w-full border rounded-lg px-3 py-2 focus:ring focus:ring-blue-200 focus:outline-none"
+        x-on:input="count = $event.target.value.length"></textarea>
 
-      <div>
-        <label>Location</label>
-        <input type="text" name="location" required />
-      </div>
+      <p class="text-sm text-gray-500 mt-1">
+        <span x-text="count"></span> / <span x-text="max"></span> characters
+      </p>
+    </div>
 
-      <div>
-        <label>Category</label>
-        <input type="text" name="category" required />
-      </div>
+    <div>
+      <label class="block text-sm font-medium mb-1">Location</label>
+      <input type="text" name="location"
+        class="w-full border rounded-lg px-3 py-2 focus:ring focus:ring-blue-200 focus:outline-none" />
+    </div>
 
-      <div>
-        <label>Start Time</label>
-        <input type="datetime-local" name="startTime" required />
-      </div>
+    <div>
+      <label class="block text-sm font-medium mb-1">Category</label>
+      <input type="text" name="category"
+        class="w-full border rounded-lg px-3 py-2 focus:ring focus:ring-blue-200 focus:outline-none" />
+    </div>
 
-      <div>
-        <label>End Time</label>
-        <input type="datetime-local" name="endTime" required />
-      </div>
+    <div>
+      <label class="block text-sm font-medium mb-1">Start Time</label>
+      <input type="datetime-local" name="startTime"
+        class="w-full border rounded-lg px-3 py-2 focus:ring focus:ring-blue-200 focus:outline-none" />
+    </div>
 
-      <div>
-        <label>Capacity</label>
-        <input type="number" name="capacity" min="1" required />
-      </div>
+    <div>
+      <label class="block text-sm font-medium mb-1">End Time</label>
+      <input type="datetime-local" name="endTime"
+        class="w-full border rounded-lg px-3 py-2 focus:ring focus:ring-blue-200 focus:outline-none" />
+    </div>
 
-      <button type="submit">Create Event</button>
-    </form>
-  </body>
-</html>
+    <div>
+      <label class="block text-sm font-medium mb-1">Capacity</label>
+      <input type="number" name="capacity"
+        class="w-full border rounded-lg px-3 py-2 focus:ring focus:ring-blue-200 focus:outline-none" />
+    </div>
+
+    <button type="submit"
+      class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition">
+      Create Event
+    </button>
+
+  </form>
+</div>

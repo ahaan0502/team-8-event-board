@@ -1,66 +1,12 @@
-<h1>Edit Event</h1>
+<div class="max-w-xl mx-auto">
+  <h1 class="text-2xl font-bold mb-2">Edit Event</h1>
 
-<div id="edit-form">
-  <form
-    hx-post="/events/<%= event.id %>"
-    hx-target="#edit-form"
-    hx-swap="outerHTML"
+  <a
+    href="/events/<%= event.id %>"
+    class="inline-flex items-center gap-2 mb-6 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 transition"
   >
-    <div>
-      <label>Title</label>
-      <input type="text" name="title" value="<%= event.title %>" required />
-    </div>
+    ← Back to Event
+  </a>
 
-    <div>
-      <label>Description</label>
-      <textarea name="description" required><%= event.description %></textarea>
-    </div>
-
-    <div>
-      <label>Location</label>
-      <input type="text" name="location" value="<%= event.location %>" required />
-    </div>
-
-    <div>
-      <label>Category</label>
-      <input type="text" name="category" value="<%= event.category %>" required />
-    </div>
-
-    <div>
-      <label>Start Time</label>
-      <input
-        type="datetime-local"
-        name="startTime"
-        value="<%= event.startDatetime ? new Date(event.startDatetime).toISOString().slice(0,16) : '' %>"
-        required
-      />
-    </div>
-
-    <div>
-      <label>End Time</label>
-      <input
-        type="datetime-local"
-        name="endTime"
-        value="<%= event.endDatetime ? new Date(event.endDatetime).toISOString().slice(0,16) : '' %>"
-        required
-      />
-    </div>
-
-    <div>
-      <label>Capacity</label>
-      <input
-        type="number"
-        name="capacity"
-        min="1"
-        value="<%= event.capacity %>"
-        required
-      />
-    </div>
-
-    <button type="submit">Update Event</button>
-  </form>
-
-  <% if (pageError) { %>
-    <p style="color: red;"><%= pageError %></p>
-  <% } %>
+  <%- include('../partials/editForm', { event, session, pageError }) %>
 </div>

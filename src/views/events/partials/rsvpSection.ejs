@@ -1,13 +1,38 @@
 <div id="rsvp-section">
-  <button
-    hx-post="/events/<%= event.id %>/rsvp"
-    hx-target="#rsvp-section"
-    hx-swap="outerHTML"
-  >
-    Toggle RSVP
-  </button>
 
-  <p>
-    Your RSVP: <%= event.rsvpStatus || "none" %>
+  <div
+    x-data="{ active: true }"
+    x-init="setTimeout(() => active = false, 200)"
+    :class="active ? 'scale-105' : 'scale-100'"
+    class="transition transform inline-block"
+  >
+
+    <button
+      hx-post="/events/<%= event.id %>/rsvp"
+      hx-target="#rsvp-section"
+      hx-swap="outerHTML"
+      class="
+        px-4 py-2 rounded-lg font-semibold transition
+        <%= event.rsvpStatus === 'going'
+          ? 'bg-green-500 text-white'
+          : event.rsvpStatus === 'waitlisted'
+          ? 'bg-yellow-400 text-black'
+          : 'bg-gray-300 text-black'
+        %>
+      "
+    >
+    Toggle RSVP (<%= event.rsvpStatus === 'going'
+        ? 'Going ✓'
+        : event.rsvpStatus === 'waitlisted'
+        ? 'Waitlisted'
+        : 'RSVP'
+      %>)
+    </button>
+
+  </div>
+
+  <p class="text-sm text-gray-600 mt-2">
+    Your RSVP: <strong><%= event.rsvpStatus || "none" %></strong>
   </p>
+
 </div>

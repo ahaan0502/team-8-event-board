@@ -10,6 +10,11 @@ export interface IAttendeeController {
     eventId: string,
     store: AppSessionStore
   ): Promise<void>;
+  showAttendeeListPartial(
+    res: Response,
+    eventId: string,
+    store: AppSessionStore
+  ): Promise<void>;
 }
 
 class AttendeeController implements IAttendeeController {
@@ -51,6 +56,32 @@ class AttendeeController implements IAttendeeController {
 
     this.logger.info(`Attendee list viewed for event ${eventId} by ${user.userId}`);
     res.render("events/attendees", { attendees: result.value, eventId, session });
+  }
+
+  async showAttendeeListPartial(
+    res: Response,
+    eventId: string,
+    store: AppSessionStore
+  ): Promise<void> {
+    const user = getAuthenticatedUser(store);
+
+    if (!user) {
+      res.status(403).render("partials/error", { message: "You must be logged in.", layout: false });
+      return;
+    }
+
+    const result = await this.service.getAttendeeList(eventId, user.userId, user.role);
+
+    if (result.ok === false) {
+      const status = result.value.type === "NotFoundError" ? 404
+        : result.value.type === "NotAuthorizedError" ? 403 : 400;
+      this.logger.warn(`Attendee partial failed for event ${eventId}: ${result.value.message}`);
+      res.status(status).render("partials/error", { message: result.value.message, layout: false });
+      return;
+    }
+
+    this.logger.info(`Attendee partial viewed for event ${eventId} by ${user.userId}`);
+    res.render("events/partials/attendee-list", { attendees: result.value, eventId, layout: false });
   }
 }
 

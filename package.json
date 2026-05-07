@@ -8,6 +8,7 @@
     "build": "tsc --outDir dist -m nodenext -t es2024 --esModuleInterop src/app.ts src/server.ts",
     "test": "jest --runInBand",
     "test:watch": "jest --watch",
+    "postinstall": "prisma generate",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev --name init",
     "clean": "rimraf dist node_modules"
@@ -38,6 +39,6 @@
     "rimraf": "^6.1.3",
     "supertest": "^7.2.2",
     "ts-jest": "^29.4.6",
-    "typescript": "^5.9.3"
+    "typescript": "^6.0.3"
   }
 }

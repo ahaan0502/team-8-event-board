@@ -21,6 +21,7 @@ import type { IEventController } from "./events/eventController";
 import type { RSVPDashboardController } from './rsvps/RSVPDashboardController'
 import { OrganizerDashboardController } from "./events/OrganizerDashboardController";
 import type { IAttendeeController } from "./rsvp/attendeeController";
+import type { IEventService } from "./events/eventService";
 
 type AsyncRequestHandler = RequestHandler;
 
@@ -43,6 +44,7 @@ class ExpressApp implements IApp {
     private readonly rsvpDashboardController: RSVPDashboardController,
     private readonly organizerDashboardController: OrganizerDashboardController,
     private readonly attendeeController: IAttendeeController,
+    private readonly eventService: IEventService,
     private readonly logger: ILoggingService,
 ) {
     this.app = express();
@@ -259,6 +261,26 @@ this.app.get(
   }),
 );
 
+this.app.get(
+  "/events",
+  asyncHandler(async (req, res) => {
+    if (!this.requireAuthenticated(req, res)) {
+      return;
+    }
+
+    const rawCategory = typeof req.query.category === "string" ? req.query.category : undefined;
+    const rawTimeframe = typeof req.query.timeframe === "string" ? req.query.timeframe : undefined;
+    const timeframe = rawTimeframe as "all" | "week" | "weekend" | undefined;
+    const rawQuery = typeof req.query.q === "string" ? req.query.q : undefined;
+
+    await this.eventController.listEvents(
+      res,
+      { category: rawCategory, timeframe, query: rawQuery },
+      sessionStore(req)
+    );
+  })
+);
+
 this.app.post(
   "/events",
   asyncHandler(async (req, res) => {
@@ -338,26 +360,6 @@ this.app.get(
   }),
 );
     
-this.app.get(
-  "/events",
-  asyncHandler(async (req, res) => {
-    if (!this.requireAuthenticated(req, res)) {
-      return;
-    }
-
-    const rawCategory = typeof req.query.category === "string" ? req.query.category : undefined;
-    const rawTimeframe = typeof req.query.timeframe === "string" ? req.query.timeframe : undefined;
-    const timeframe = rawTimeframe as "all" | "week" | "weekend" | undefined;
-    const rawQuery = typeof req.query.q === "string" ? req.query.q : undefined;
-
-    await this.eventController.listEvents(
-      res,
-      { category: rawCategory, timeframe, query: rawQuery },
-      sessionStore(req)
-    );
-  })
-);
-
 this.app.get(
   "/events/:id/edit",
   asyncHandler(async (req, res) => {
@@ -469,6 +471,15 @@ this.app.get(
   })
 );
 
+this.app.get(
+  "/events/:id/attendees/partial",
+  asyncHandler(async (req, res) => {
+    if (!this.requireAuthenticated(req, res)) return;
+    const eventId = typeof req.params.id === "string" ? req.params.id : "";
+    await this.attendeeController.showAttendeeListPartial(res, eventId, sessionStore(req));
+  })
+);
+
     // ── Authenticated home page ──────────────────────────────────────
     // TODO: Replace this placeholder with your project's main page.
 
@@ -481,7 +492,13 @@ this.app.get(
 
         const browserSession = recordPageView(sessionStore(req));
         this.logger.info(`GET /home for ${browserSession.browserLabel}`);
-        res.render("home", { session: browserSession, pageError: null });
+        const upcomingResult = await this.eventService.listPublishedEvents({ timeframe: "week" });
+        const upcomingEvents = upcomingResult.ok ? upcomingResult.value : [];
+        const allResult = await this.eventService.listPublishedEvents({ timeframe: "all" });
+        const recentlyAdded = allResult.ok
+          ? [...allResult.value].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()).slice(0, 5)
+          : [];
+        res.render("home", { session: browserSession, pageError: null, upcomingEvents, recentlyAdded });
       }),
     );
 
@@ -508,6 +525,7 @@ export function CreateApp(
   rsvpDashboardController: RSVPDashboardController,
   organizerDashboardController: OrganizerDashboardController,
   attendeeController: IAttendeeController,
+  eventService: IEventService,
   logger: ILoggingService,
 ): IApp {
   return new ExpressApp(
@@ -516,6 +534,7 @@ export function CreateApp(
     rsvpDashboardController,
     organizerDashboardController,
     attendeeController,
+    eventService,
     logger
   );
 }

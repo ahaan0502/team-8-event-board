@@ -11,15 +11,13 @@ import { CreateEventController } from "./events/eventController";
 import { CreateEventService } from "./events/eventService";
 import { CreateOrganizerDashboardService } from "./events/OrganizerDashboardService";
 import { OrganizerDashboardController } from "./events/OrganizerDashboardController";
-import { InMemoryRSVPRepository } from "./rsvps/InMemoryRSVPRepository";
+import { PrismaEventRepository } from "./events/prismaEventRepository";
+import { PrismaRSVPRepository } from "./events/prismaRSVPRepository";
 import { RSVPDashboardController } from "./rsvps/RSVPDashboardController";
 import { CreateRSVPDashboardService } from "./rsvps/RSVPDashboardService";
 import { CreateLoggingService } from "./service/LoggingService";
 import type { ILoggingService } from "./service/LoggingService";
 import { CreateRSVPService } from "./events/rsvpService";
-import { PrismaEventRepository } from "./events/prismaEventRepository";
-import { PrismaRSVPRepository } from "./events/prismaRSVPRepository";
-import { PrismaDashboardRSVPRepository } from "./rsvps/PrismaRSVPRepository";
 
 export function createComposedApp(logger?: ILoggingService): IApp {
   const resolvedLogger = logger ?? CreateLoggingService();
@@ -29,45 +27,51 @@ export function createComposedApp(logger?: ILoggingService): IApp {
   const passwordHasher = CreatePasswordHasher();
   const authService = CreateAuthService(authUsers, passwordHasher);
   const adminUserService = CreateAdminUserService(authUsers, passwordHasher);
+
   const authController = CreateAuthController(
     authService,
     adminUserService,
     resolvedLogger
   );
 
-  // Event wiring
+  // Event wiring (Prisma — Feature 8 and shared event reads)
   const eventRepo = new PrismaEventRepository();
   const eventService = CreateEventService(eventRepo);
 
-  // RSVP wiring (NEW)
+  // RSVP wiring — one Prisma repo for toggles, My RSVPs (Feature 7), organizer counts (Feature 8)
   const rsvpRepo = new PrismaRSVPRepository();
   const rsvpService = CreateRSVPService(rsvpRepo, eventRepo);
 
   const eventController = CreateEventController(
-  eventService,
-  rsvpService,
-  resolvedLogger
-);
+    eventService,
+    rsvpService,
+    resolvedLogger
+  );
 
   // Attendee list wiring
-  const attendeeService = CreateAttendeeService(rsvpRepo, authUsers, eventService);
-  const attendeeController = CreateAttendeeController(attendeeService, resolvedLogger);
+  const attendeeService = CreateAttendeeService(
+    rsvpRepo,
+    authUsers,
+    eventService
+  );
 
-  // RSVP dashboard wiring
-  const dashboardRsvpRepo = new PrismaDashboardRSVPRepository();
-  const rsvpDashboardService = CreateRSVPDashboardService(
-  dashboardRsvpRepo,
-  eventRepo
-);
+  const attendeeController = CreateAttendeeController(
+    attendeeService,
+    resolvedLogger
+  );
+
+  // RSVP dashboard wiring (Feature 7)
+  const rsvpDashboardService = CreateRSVPDashboardService(rsvpRepo, eventRepo);
   const rsvpDashboardController = new RSVPDashboardController(
     rsvpDashboardService
   );
 
-  // Organizer dashboard wiring
+  // Organizer dashboard wiring (Feature 8)
   const organizerDashboardService = CreateOrganizerDashboardService(
     eventRepo,
-    dashboardRsvpRepo
+    rsvpRepo
   );
+
   const organizerDashboardController = new OrganizerDashboardController(
     organizerDashboardService
   );
@@ -78,6 +82,7 @@ export function createComposedApp(logger?: ILoggingService): IApp {
     rsvpDashboardController,
     organizerDashboardController,
     attendeeController,
+    eventService,
     resolvedLogger
   );
 }
